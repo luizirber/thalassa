@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
-from mpl_toolkits.basemap import pupynere
-
+#from mpl_toolkits.basemap import pupynere
+import numpy as np
+from netCDF4 import Dataset
 
 class Grid(object):
 
     def __init__(self, filename, *args, **kwargs):
-        self.data = pupynere.netcdf_file(filename, 'r', mmap=False)#args, kwargs)
+#        self.data = pupynere.netcdf_file(filename, 'r', mmap=False)#args, kwargs)
+        self.data = Dataset(filename, 'r', format="NETCDF4")
         self.preprocessing()
 
     def preprocessing(self):
@@ -22,16 +24,24 @@ class MOM4Grid(Grid):
         super(MOM4Grid, self).__init__(filename, args, kwargs)
 
     def fix(self):
-        '''
-        X[:200,:360] = x_vert_T[0,:]
-        X[200,:360] = x_vert_T[1,-1,:]
-        X[:200,360] = x_vert_T[3,:,-1]
-        X[200,360] = x_vert_T[2,-1,-1]
+        x_vert_T = self.data.variables['x_vert_T']
+        y_vert_T = self.data.variables['y_vert_T']
+        depth_t = self.data.variables['depth_t']
 
-        Y[:200,:360] = y_vert_T[0,:]
-        Y[200,:360] = y_vert_T[1,-1,:]
-        Y[:200,360] = y_vert_T[3,:,-1]
-        Y[200,360] = y_vert_T[2,-1,-1]
+        z, y, x = x_vert_T.shape
 
-        '''
-        pass
+        X = np.zeros((y+1, x+1))
+        X[:y,:x] = x_vert_T[0,:]
+        X[y,:x] = x_vert_T[2,-1,:]
+        X[:y,x] = x_vert_T[3,:,-1]
+        X[y,x] = x_vert_T[1,-1,-1]
+
+        Y = np.zeros((y+1, x+1))
+        Y[:y,:x] = y_vert_T[0,:]
+        Y[y,:x] = y_vert_T[2,-1,:]
+        Y[:y,x] = y_vert_T[3,:,-1]
+        Y[y,x] = y_vert_T[1,-1,-1]
+
+        self.X = X
+        self.Y = Y
+        self.depth_t = depth_t

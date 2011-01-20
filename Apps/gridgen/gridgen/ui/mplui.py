@@ -12,41 +12,79 @@ from gridgen import MOM4Grid
 
 class MplFigure(Figure):
 
-#    def __init__(self, *args, **kwargs):
     def __init__(self):
         super(MplFigure, self).__init__()
+        raw_grid = MOM4Grid('examples/data/lowres.nc') # TODO: fix hardcoded path
+        raw_grid.fix()
 
-    def plot_grid(self):
-        raw_grid = MOM4Grid('examples/data/lowres.nc', mmap=False)
+        self.grid = raw_grid
+        self.X = self.grid.X
+        self.Y = self.grid.Y
+        self.depth_t = self.grid.depth_t
 
-        x_vert_T = raw_grid.data.variables['x_vert_T']
-        y_vert_T = raw_grid.data.variables['y_vert_T']
-        depth_t = raw_grid.data.variables['depth_t']
+        self.lat_0 = -30
+        self.lon_0 = -70
+        self.zoom_level = 5
 
-        z, y, x = x_vert_T.shape
+        self._bmap = None
 
-        X = np.zeros((y+1, x+1))
-        X[:y,:x] = x_vert_T[0,:]
-        X[y,:x] = x_vert_T[2,-1,:]
-        X[:y,x] = x_vert_T[3,:,-1]
-        X[y,x] = x_vert_T[1,-1,-1]
 
-        Y = np.zeros((y+1, x+1))
-        Y[:y,:x] = y_vert_T[0,:]
-        Y[y,:x] = y_vert_T[2,-1,:]
-        Y[:y,x] = y_vert_T[3,:,-1]
-        Y[y,x] = y_vert_T[1,-1,-1]
+    def plot_grid(self, *args, **kwargs):
+#llcrnrlon=None, llcrnrlat=None,
+#                     urcrnrlon=None, urcrnrlat=None,
+#                     llcrnrx=None, llcrnry=None,
+#                     urcrnrx=None, urcrnry=None,
+#                     width=None, height=None,
+#                     projection='cyl', resolution='c',
+#                     area_thresh=None, rsphere=6370997.0,
+#                     lat_ts=None,
+#                     lat_1=None, lat_2=None,
+#                     lat_0=None, lon_0=None,
+#                     lon_1=None, lon_2=None,
+#                     no_rot=False,
+#                     suppress_ticks=True,
+#                     satellite_height=35786000,
+#                     boundinglat=None,
+#                     fix_aspect=True,
+#                     anchor='C',
+#                     ax=None):
 
-        bmap = basemap.Basemap(projection='ortho', lat_0=90, lon_0=120, resolution='l')
+        if not self._bmap:
+            self._bmap = basemap.Basemap(projection='ortho', lat_0=self.lat_0,
+                lon_0=self.lon_0, resolution='c')
+            self._bmap.ax = self.add_axes((0, 0, 1, 1))
 
-        bmap.ax = self.add_axes((0, 0, 1, 1))
+        options = kwargs.keys()
+        if "lat_0" in options or "lon_0" in options:
+            self.clear()
+            lat_0_old = self.lat_0
+            lon_0_old = self.lon_0
 
-        x, y = bmap(X, Y)
+            self.lat_0 = float(kwargs.get('lat_0', self.lat_0))
+            if self.lat_0 > 90:
+                self.lat_0 = 90
+            elif self.lat_0 < -90:
+                self.lat_0 = -90
 
-        bmap.pcolor(x, y, depth_t, edgecolors='k')
-        bmap.drawcoastlines(color='w')
+            self.lon_0 = float(kwargs.get('lon_0', self.lon_0))
+            if self.lon_0 > 180:
+                self.lon_0 -= 360
+            elif self.lon_0 < -180:
+                self.lon_0 += 360
 
-        plt.show()
+            self._bmap = basemap.Basemap(projection='ortho',
+                lat_0=self.lat_0, lon_0=self.lon_0,
+                resolution='c')
+            self._bmap.ax = self.add_axes((0, 0, 1, 1))
+
+        zl = self.zoom_level
+        x, y = self._bmap(self.X[::zl, ::zl], self.Y[::zl, ::zl])
+
+        self._bmap.pcolor(x, y, self.depth_t[zl/2::zl, zl/2::zl],
+            edgecolors=kwargs.get('edgecolors', 'none'))
+        self._bmap.drawcoastlines(color='w')
+
+        self.canvas.draw()
 
 
 class MplUI(FigureCanvas, UI):
