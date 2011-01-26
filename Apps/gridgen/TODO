@@ -1,1 +1,3 @@
 * on MOM4Grid fix() method, close the south pole and the vertical hole.
+* depending on zoom level choose different resolutions for continent boundaries.
+* queue events, so we can have a more responsive UI? Hmmm...

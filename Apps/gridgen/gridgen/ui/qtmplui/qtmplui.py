@@ -19,12 +19,17 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         self.mapwidget.set_canvas(self._figure)
         self._figure.plot_grid()
         self.updateLatLonEdits()
+        self.updateMinMaxValueEdits()
 
         self.statusBar().showMessage("GEA-INPE", 2011)
 
     def updateLatLonEdits(self):
-        self.latEdit.setText(str(self._figure.lat_0))
-        self.lonEdit.setText(str(self._figure.lon_0))
+        self.latEdit.setText(str(self._figure.get_plot_property('lat_0')))
+        self.lonEdit.setText(str(self._figure.get_plot_property('lon_0')))
+
+    def updateMinMaxValueEdits(self):
+        self.minEdit.setText(str(self._figure.min_current_values()))
+        self.maxEdit.setText(str(self._figure.max_current_values()))
 
     @QtCore.pyqtSignature('bool')
     def on_goLatLonButton_clicked(self, checked):
@@ -44,40 +49,69 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         print 'new position!!'
 
     @QtCore.pyqtSignature('bool')
+    def on_valueRangeButton_clicked(self):
+        print 'change range!'
+        try:
+            new_min = float(self.minEdit.text())
+        except ValueError:
+            pass # TODO: raise error
+
+        try:
+            new_max = float(self.maxEdit.text())
+        except ValueError:
+            pass # TODO: raise error
+        self._figure.plot_grid(vmin=new_min, vmax=new_max)
+        self.updateMinMaxValueEdits()
+
+    @QtCore.pyqtSignature('bool')
     def on_moveUpButton_clicked(self, checked):
         print 'up!'
-        self._figure.plot_grid(lat_0=self._figure.lat_0 + 5)
+        self._figure.rotate(lat_delta=5)
         self.updateLatLonEdits()
+
+    @QtCore.pyqtSignature('bool')
+    def on_depthRadioButton_toggled(self, checked=False):
+        print 'plot depth'
+        self._figure.plot_depth_t()
+        self.updateMinMaxValueEdits()
+
+    @QtCore.pyqtSignature('bool')
+    def on_levelsRadioButton_toggled(self, checked=False):
+        print 'plot levels'
+        self._figure.plot_num_levels()
+        self.updateMinMaxValueEdits()
 
     @QtCore.pyqtSignature('bool')
     def on_moveDownButton_clicked(self):
         print 'down!'
-        self._figure.plot_grid(lat_0=self._figure.lat_0 - 5)
+        self._figure.rotate(lat_delta=-5)
         self.updateLatLonEdits()
 
     @QtCore.pyqtSignature('bool')
     def on_moveLeftButton_clicked(self):
         print 'left!'
-        self._figure.plot_grid(lon_0=self._figure.lon_0 - 5)
+        self._figure.rotate(lon_delta=-5)
         self.updateLatLonEdits()
 
     @QtCore.pyqtSignature('bool')
     def on_moveRightButton_clicked(self):
         print 'right!'
-        self._figure.plot_grid(lon_0=self._figure.lon_0 + 5)
+        self._figure.rotate(lon_delta=5)
         self.updateLatLonEdits()
 
     @QtCore.pyqtSignature('bool')
     def on_zoomInButton_clicked(self):
         print 'zoom in!'
+        self._figure.zoom_in()
 
     @QtCore.pyqtSignature('bool')
     def on_zoomOutButton_clicked(self):
         print 'zoom out!'
+        self._figure.zoom_out()
 
-    @QtCore.pyqtSignature('bool')
     def on_zoomSlider_sliderReleased(self):
-        print 'slider changed'
+        print 'slider released', self.zoomSlider.value()
+        self._figure.zoom(self.zoomSlider.value())
 
     def on_actionQuit_triggered(self):
         self.close()

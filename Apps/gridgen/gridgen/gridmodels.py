@@ -27,6 +27,7 @@ class MOM4Grid(Grid):
         x_vert_T = self.data.variables['x_vert_T']
         y_vert_T = self.data.variables['y_vert_T']
         depth_t = self.data.variables['depth_t']
+        num_levels = self.data.variables['num_levels']
 
         z, y, x = x_vert_T.shape
 
@@ -45,3 +46,4 @@ class MOM4Grid(Grid):
         self.X = X
         self.Y = Y
         self.depth_t = depth_t
+        self.num_levels = num_levels
