@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from bisect import bisect_left
+
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -69,6 +71,8 @@ class MplFigure(Figure):
         self.max_zoom_level = self._max_zoom_level()
 
         self._bmap = None
+        self.cidpress = None
+        self.cidrelease = None
 
     def rotate(self, lat_delta=0, lon_delta=0):
         new_lat = self.options['lat_0'] + lat_delta
@@ -96,57 +100,37 @@ class MplFigure(Figure):
 
     def plot_depth_t(self):
         self.current_values = self.depth_t
-        self._max_zoom_level()
         self.pcolor_options['vmin'] = np.min(self.current_values)
         self.pcolor_options['vmax'] = np.max(self.current_values)
         self.plot_grid()
 
     def plot_num_levels(self):
         self.current_values = self.num_levels
-        self._max_zoom_level()
         self.pcolor_options['vmin'] = np.min(self.current_values)
         self.pcolor_options['vmax'] = np.max(self.current_values)
         self.plot_grid()
 
     def plot_grid(self, *args, **kwargs):
-        if not self._bmap:
-            self._calc_zoom_level()
-            self._bmap = basemap.Basemap(**self.options)
-            self._bmap.ax = self.add_axes((0, 0, 1, 1))
+        self._parse_plot_args(kwargs)
+        self.clear()
+        self.canvas.mpl_disconnect(self.cidpress)
+        self.canvas.mpl_disconnect(self.cidrelease)
+        self._calc_zoom_level()
+        self._bmap = basemap.Basemap(**self.options)
+        self._bmap.ax = self.add_axes((0, 0, 1, 1))
 
-        if self._parse_plot_args(kwargs):
-            self.clear()
-            self.canvas.mpl_disconnect(self.cidpress)
-            self.canvas.mpl_disconnect(self.cidrelease)
-            self._calc_zoom_level()
-            self._bmap = basemap.Basemap(**self.options)
-            self._bmap.ax = self.add_axes((0, 0, 1, 1))
+        self._parse_pcolor_args(kwargs)
+        zl = self._calc_step()
+        x, y = self._bmap(self.X[::zl, ::zl], self.Y[::zl, ::zl])
+        self.x = ma.masked_values(np.where( (x<self._bmap.llcrnrx*.9) | (x>self._bmap.urcrnrx*1.1 ), 1.e30, x), 1.e30)
+        self.y = ma.masked_values(np.where( (y<self._bmap.llcrnry*.9) | (y>self._bmap.urcrnry*1.1 ), 1.e30, y), 1.e30)
+        cells = self._bmap.pcolor(self.x, self.y, self.current_values[zl/2::zl, zl/2::zl],
+                **self.pcolor_options)
+        self._bmap.drawcoastlines(color='w')
+        self._bmap.drawcountries(color='w')
 
-        if self._parse_pcolor_args(kwargs):
-            zl = self._calc_step()
-            x, y = self._bmap(self.X[::zl, ::zl], self.Y[::zl, ::zl])
-            x = ma.masked_values(np.where( (x<self._bmap.llcrnrx*.9) | (x>self._bmap.urcrnrx*1.1 ), 1.e30, x), 1.e30)
-            y = ma.masked_values(np.where( (y<self._bmap.llcrnry*.9) | (y>self._bmap.urcrnry*1.1 ), 1.e30, y), 1.e30)
-            cells = self._bmap.pcolor(x, y, self.current_values[zl/2::zl, zl/2::zl],
-                    **self.pcolor_options)
-            self._bmap.drawcoastlines(color='w')
-            self._bmap.drawcountries(color='w')
-
-            self.cidpress = self.canvas.mpl_connect('button_press_event', self.on_press)
-            self.cidrelease = self.canvas.mpl_connect('button_release_event', self.on_release)
-
-#            scs = []
-#            for cell in cells:
-#                sc = SelectableCell(cell)
-#                sc.connect()
-#                scs.append(cell)
-
-            # add a map scale.
-#            length = 5000
-#            x1,y1 = 0.3*self._bmap.xmax, 0.25*self._bmap.ymax
-#            lon1,lat1 = self._bmap(x1,y1,inverse=True)
-#            self._bmap.drawmapscale(lon1,lat1,lon1,lat1,length,fontsize=8,barstyle='fancy',\
-#                           labelstyle='fancy',units='km')
+        self.cidpress = self.canvas.mpl_connect('button_press_event', self.on_press)
+        self.cidrelease = self.canvas.mpl_connect('button_release_event', self.on_release)
 
         self.canvas.draw()
 
@@ -158,11 +142,26 @@ class MplFigure(Figure):
     def on_release(self, event):
         print 'release: button=%d, x=%d, y=%d, xdata=%f, ydata=%f'%(
             event.button, event.x, event.y, event.xdata, event.ydata)
-        if self.event.xdata == event.xdata:
-            print 'clique'
+        if self.event.x == event.x and self.event.y == event.y:
+            x, y = self._bmap(self.X, self.Y)
+            px = self._calc_pos(x, event.xdata)
+            py = self._calc_pos(y, event.ydata)
+            print 'clique', px, py
         else:
-            print 'arraste'
+            print 'arraste: inicial', self._calc_pos(self.x, event.xdata), self._calc_pos(self.y, event.ydata),
+            print 'final: ', self._calc_pos(self.x, event.xdata), self._calc_pos(self.y, event.ydata)
         self.event = None
+
+    def _calc_pos(self, array, value):
+        shape = array.shape
+        d = reduce(int.__mul__, shape)
+        pos = bisect_left(array.reshape(d), value)
+#        pos = array.reshape(d).searchsorted(value)
+        print
+        print "_calc_pos", array[pos%shape[0], pos/shape[0]], value, abs(array[pos%shape[0], pos/shape[0]] - value)
+        print shape, pos, pos%shape[0], pos/shape[0]
+        print
+        return pos, pos/shape[0], pos % shape[0]
 
     def get_plot_property(self, key):
         return self.options.get(key, None)
@@ -176,12 +175,12 @@ class MplFigure(Figure):
     def _calc_zoom_level(self):
         d = self.options
         self.zoom_level = 1 + int(logn(self.zoom_step, d['rsphere'] / (abs(d['llcrnrx']) + abs(d['urcrnrx']))))
-        if self.zoom_level < 3:
-            self.options['resolution'] = 'c'
-        elif self.zoom_level < 5:
-            self.options['resolution'] = 'l'
-        elif self.zoom_level < 7:
-            self.options['resolution'] = 'i'
+#        if self.zoom_level < 3:
+#            self.options['resolution'] = 'c'
+#        elif self.zoom_level < 5:
+#            self.options['resolution'] = 'l'
+#        elif self.zoom_level < 7:
+#            self.options['resolution'] = 'i'
         print 'zl', self.zoom_level
 
 

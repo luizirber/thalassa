@@ -20,6 +20,7 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         self._figure.plot_grid()
         self.updateLatLonEdits()
         self.updateMinMaxValueEdits()
+        self.updateZoomSlider()
 
         self.statusBar().showMessage("GEA-INPE", 2011)
 
@@ -30,6 +31,10 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
     def updateMinMaxValueEdits(self):
         self.minEdit.setText(str(self._figure.min_current_values()))
         self.maxEdit.setText(str(self._figure.max_current_values()))
+
+    def updateZoomSlider(self):
+        self.zoomSlider.setRange(0, self._figure.max_zoom_level)
+        self.zoomSlider.setSliderPosition(self._figure.zoom_level)
 
     @QtCore.pyqtSignature('bool')
     def on_goLatLonButton_clicked(self, checked):
@@ -103,11 +108,13 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
     def on_zoomInButton_clicked(self):
         print 'zoom in!'
         self._figure.zoom_in()
+        self.updateZoomSlider()
 
     @QtCore.pyqtSignature('bool')
     def on_zoomOutButton_clicked(self):
         print 'zoom out!'
         self._figure.zoom_out()
+        self.updateZoomSlider()
 
     def on_zoomSlider_sliderReleased(self):
         print 'slider released', self.zoomSlider.value()
