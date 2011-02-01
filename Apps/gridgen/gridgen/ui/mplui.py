@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from bisect import bisect_left
-
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -18,13 +16,16 @@ class MplFigure(Figure):
 
     def __init__(self):
         super(MplFigure, self).__init__()
-        raw_grid = MOM4Grid('examples/data/grids_tupa/WORKDIR_highres/grid_spec.nc') # TODO: fix hardcoded path
+        # TODO: fix hardcoded path
+        f = 'examples/data/grids_tupa/WORKDIR_lowres/grid_spec.nc'
+#        f = 'examples/data/grids_tupa/WORKDIR_global_inpe_GT8/grid_spec.nc'
+        raw_grid = MOM4Grid(f)
         raw_grid.fix()
 
         self.grid = raw_grid
         self.X = self.grid.X
         self.Y = self.grid.Y
-        self.depth_t = self.grid.depth_t
+        self.depth_t = self.grid.depth_t[:, :]
         self.num_levels = self.grid.num_levels
         self.current_values = self.depth_t
 
@@ -41,7 +42,7 @@ class MplFigure(Figure):
             'width': None,
             'height': None,
             'projection': 'ortho',
-            'resolution': 'c', # c, l, i, h, f
+            'resolution': 'c',  # c, l, i, h, f
             'area_thresh': None,
             'lat_ts': None,
             'lat_1': None,
@@ -120,48 +121,58 @@ class MplFigure(Figure):
         self._bmap.ax = self.add_axes((0, 0, 1, 1))
 
         self._parse_pcolor_args(kwargs)
-        zl = self._calc_step()
+        zl = self._calc_step() or 1
         x, y = self._bmap(self.X[::zl, ::zl], self.Y[::zl, ::zl])
-        self.x = ma.masked_values(np.where( (x<self._bmap.llcrnrx*.9) | (x>self._bmap.urcrnrx*1.1 ), 1.e30, x), 1.e30)
-        self.y = ma.masked_values(np.where( (y<self._bmap.llcrnry*.9) | (y>self._bmap.urcrnry*1.1 ), 1.e30, y), 1.e30)
-        cells = self._bmap.pcolor(self.x, self.y, self.current_values[zl/2::zl, zl/2::zl],
-                **self.pcolor_options)
+        self.x = ma.masked_values(
+            np.where((x < self._bmap.llcrnrx * .9) |
+                     (x > self._bmap.urcrnrx * 1.1), 1.e30, x),
+            1.e30)
+        self.y = ma.masked_values(
+            np.where((y < self._bmap.llcrnry * .9) |
+                     (y > self._bmap.urcrnry * 1.1), 1.e30, y),
+            1.e30)
+        self.cells = self._bmap.pcolor(
+            self.x, self.y,
+            self.current_values[zl / 2::zl, zl / 2::zl],
+            **self.pcolor_options)
+
         self._bmap.drawcoastlines(color='w')
         self._bmap.drawcountries(color='w')
 
-        self.cidpress = self.canvas.mpl_connect('button_press_event', self.on_press)
-        self.cidrelease = self.canvas.mpl_connect('button_release_event', self.on_release)
+        self.cidpress = self.canvas.mpl_connect('button_press_event',
+            self.on_press)
+        self.cidrelease = self.canvas.mpl_connect('button_release_event',
+            self.on_release)
 
         self.canvas.draw()
 
     def on_press(self, event):
-        print 'press: button=%d, x=%d, y=%d, xdata=%f, ydata=%f'%(
+        print 'press: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' % (
             event.button, event.x, event.y, event.xdata, event.ydata)
         self.event = event
 
     def on_release(self, event):
-        print 'release: button=%d, x=%d, y=%d, xdata=%f, ydata=%f'%(
+        print 'release: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' % (
             event.button, event.x, event.y, event.xdata, event.ydata)
         if self.event.x == event.x and self.event.y == event.y:
             x, y = self._bmap(self.X, self.Y)
-            px = self._calc_pos(x, event.xdata)
-            py = self._calc_pos(y, event.ydata)
-            print 'clique', px, py
+            posx, posy = self._calc_pos(x, y, event.xdata, event.ydata)
+            print 'clique -> posx:', posx, 'posy:', posy
+            self.depth_t[posy[0][0], posy[1][0]] = -5000
+            self.plot_grid()
+            print 'diffs:', self.compare_differences()
         else:
-            print 'arraste: inicial', self._calc_pos(self.x, event.xdata), self._calc_pos(self.y, event.ydata),
-            print 'final: ', self._calc_pos(self.x, event.xdata), self._calc_pos(self.y, event.ydata)
+            print 'arraste: inicial'
+            #self._calc_pos(self.x, event.xdata)
+            print 'final: '
+            #self._calc_pos(self.x, event.xdata)
         self.event = None
 
-    def _calc_pos(self, array, value):
-        shape = array.shape
-        d = reduce(int.__mul__, shape)
-        pos = bisect_left(array.reshape(d), value)
-#        pos = array.reshape(d).searchsorted(value)
-        print
-        print "_calc_pos", array[pos%shape[0], pos/shape[0]], value, abs(array[pos%shape[0], pos/shape[0]] - value)
-        print shape, pos, pos%shape[0], pos/shape[0]
-        print
-        return pos, pos/shape[0], pos % shape[0]
+    def _calc_pos(self, xarray, yarray, xvalue, yvalue):
+        e = 1000
+        px = np.where(abs(xarray - xvalue) < e)
+        py = np.where(abs(yarray - yvalue) < e)
+        return px, py
 
     def get_plot_property(self, key):
         return self.options.get(key, None)
@@ -174,7 +185,9 @@ class MplFigure(Figure):
 
     def _calc_zoom_level(self):
         d = self.options
-        self.zoom_level = 1 + int(logn(self.zoom_step, d['rsphere'] / (abs(d['llcrnrx']) + abs(d['urcrnrx']))))
+        self.zoom_level = 1 + int(
+            logn(self.zoom_step,
+                 d['rsphere'] / (abs(d['llcrnrx']) + abs(d['urcrnrx']))))
 #        if self.zoom_level < 3:
 #            self.options['resolution'] = 'c'
 #        elif self.zoom_level < 5:
@@ -183,21 +196,21 @@ class MplFigure(Figure):
 #            self.options['resolution'] = 'i'
         print 'zl', self.zoom_level
 
-
     def _from_zoom_level(self, level):
         #TODO: verify if level is valid
-        p = (self.options['rsphere'] / self.zoom_step**(level - 1))/2
+        p = (self.options['rsphere'] / self.zoom_step ** (level - 1)) / 2
         self.zoom_level = level
         return p
 
     def _max_zoom_level(self):
-        self.max_zoom_level = logn(self.zoom_step, max(self.current_values.shape)) - 6
+        self.max_zoom_level = logn(self.zoom_step,
+             max(self.current_values.shape)) - 6
 
     def _calc_step(self):
         self._calc_zoom_level()
         self._max_zoom_level()
         items = max(self.current_values.shape)
-        return items/(self.zoom_step**(self.zoom_level + 6))
+        return items / (self.zoom_step ** (self.zoom_level + 6))
 
     def _parse_plot_args(self, opts):
         changed = False
@@ -285,6 +298,8 @@ class MplFigure(Figure):
 #        return changed or not self._bmap # TODO: is it needed to test this?
         return True
 
+    def compare_differences(self):
+        return self.grid.compare_differences('depth_t', self.depth_t)
 
 
 class MplUI(FigureCanvas, UI):

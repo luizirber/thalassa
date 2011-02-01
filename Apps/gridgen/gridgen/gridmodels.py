@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-#from mpl_toolkits.basemap import pupynere
 import numpy as np
 from netCDF4 import Dataset
+
 
 class Grid(object):
 
     def __init__(self, filename, *args, **kwargs):
-#        self.data = pupynere.netcdf_file(filename, 'r', mmap=False)#args, kwargs)
         self.data = Dataset(filename, 'r', format="NETCDF4")
         self.preprocessing()
 
@@ -31,19 +30,23 @@ class MOM4Grid(Grid):
 
         z, y, x = x_vert_T.shape
 
-        X = np.zeros((y+1, x+1))
-        X[:y,:x] = x_vert_T[0,:]
-        X[y,:x] = x_vert_T[2,-1,:]
-        X[:y,x] = x_vert_T[3,:,-1]
-        X[y,x] = x_vert_T[1,-1,-1]
+        X = np.zeros((y + 1, x + 1))
+        X[:y, :x] = x_vert_T[0, :]
+        X[y, :x] = x_vert_T[2, -1, :]
+        X[:y, x] = x_vert_T[3, :, -1]
+        X[y, x] = x_vert_T[1, -1, -1]
 
-        Y = np.zeros((y+1, x+1))
-        Y[:y,:x] = y_vert_T[0,:]
-        Y[y,:x] = y_vert_T[2,-1,:]
-        Y[:y,x] = y_vert_T[3,:,-1]
-        Y[y,x] = y_vert_T[1,-1,-1]
+        Y = np.zeros((y + 1, x + 1))
+        Y[:y, :x] = y_vert_T[0, :]
+        Y[y, :x] = y_vert_T[2, -1, :]
+        Y[:y, x] = y_vert_T[3, :, -1]
+        Y[y, x] = y_vert_T[1, -1, -1]
 
         self.X = X
         self.Y = Y
         self.depth_t = depth_t
         self.num_levels = num_levels
+
+    def compare_differences(self, variable, cmpe):
+        diff = (self.data.variables[variable] == cmpe)
+        return np.where(diff == False)

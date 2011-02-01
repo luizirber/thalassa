@@ -3,3 +3,6 @@
     DONE: but it is slow. Change Basemap to only read boundaries that are shown?
     Hmm...
 * queue events, so we can have a more responsive UI? Hmmm...
+* Do I need to convert the matrix when the zoom doesn't change? Probably yes,
+  but it is a good optimization to look after when I get enough time.
+* zoom should work with wid/height and lat/lon too, not only with crnrx/crnry
