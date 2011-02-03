@@ -10,7 +10,10 @@ class QtMplWidget(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.vbl = QtGui.QVBoxLayout()
         self.setLayout(self.vbl)
+        self.canvas = None
 
     def set_canvas(self, figure):
+        if self.canvas:
+            self.vbl.removeWidget(self.canvas)
         self.canvas = QtMplCanvas(figure)
         self.vbl.addWidget(self.canvas)
