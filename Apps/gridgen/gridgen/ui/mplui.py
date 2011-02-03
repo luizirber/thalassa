@@ -1,4 +1,3 @@
-import ipdb
 #!/usr/bin/env python
 
 from matplotlib import pyplot as plt
@@ -10,21 +9,14 @@ from numpy.lib.scimath import logn
 from mpl_toolkits import basemap
 
 from gridgen.ui import UI
-from gridgen import MOM4Grid
 
-#from PyQt4 import QtCore
 
 class MplFigure(Figure):
 
-    def __init__(self):
+    def __init__(self, data):
         super(MplFigure, self).__init__()
-        # TODO: fix hardcoded path
-#        f = 'examples/data/grids_tupa/WORKDIR_lowres/grid_spec.nc'
-        f = 'examples/data/grids_tupa/WORKDIR_global_inpe_GT8/grid_spec.nc'
-        raw_grid = MOM4Grid(f)
-        raw_grid.fix()
 
-        self.grid = raw_grid
+        self.grid = data
         self.X = self.grid.X
         self.Y = self.grid.Y
         self.depth_t = self.grid.depth_t[:, :]
