@@ -1,3 +1,4 @@
+import ipdb
 #!/usr/bin/env python
 
 from matplotlib import pyplot as plt
@@ -11,14 +12,15 @@ from mpl_toolkits import basemap
 from gridgen.ui import UI
 from gridgen import MOM4Grid
 
+#from PyQt4 import QtCore
 
 class MplFigure(Figure):
 
     def __init__(self):
         super(MplFigure, self).__init__()
         # TODO: fix hardcoded path
-        f = 'examples/data/grids_tupa/WORKDIR_lowres/grid_spec.nc'
-#        f = 'examples/data/grids_tupa/WORKDIR_global_inpe_GT8/grid_spec.nc'
+#        f = 'examples/data/grids_tupa/WORKDIR_lowres/grid_spec.nc'
+        f = 'examples/data/grids_tupa/WORKDIR_global_inpe_GT8/grid_spec.nc'
         raw_grid = MOM4Grid(f)
         raw_grid.fix()
 
@@ -70,6 +72,7 @@ class MplFigure(Figure):
         self.zoom_step = 2
         self.zoom_level = self._calc_zoom_level()
         self.max_zoom_level = self._max_zoom_level()
+        self.selected_cell = None
 
         self._bmap = None
         self.cidpress = None
@@ -115,14 +118,16 @@ class MplFigure(Figure):
         self._parse_plot_args(kwargs)
         self.clear()
         self.canvas.mpl_disconnect(self.cidpress)
+        self.cidpress = None
         self.canvas.mpl_disconnect(self.cidrelease)
+        self.cidrelease = None
         self._calc_zoom_level()
         self._bmap = basemap.Basemap(**self.options)
         self._bmap.ax = self.add_axes((0, 0, 1, 1))
 
         self._parse_pcolor_args(kwargs)
-        zl = self._calc_step() or 1
-        x, y = self._bmap(self.X[::zl, ::zl], self.Y[::zl, ::zl])
+        zs = self._calc_step() or 1
+        x, y = self._bmap(self.X[::zs, ::zs], self.Y[::zs, ::zs])
         self.x = ma.masked_values(
             np.where((x < self._bmap.llcrnrx * .9) |
                      (x > self._bmap.urcrnrx * 1.1), 1.e30, x),
@@ -133,16 +138,17 @@ class MplFigure(Figure):
             1.e30)
         self.cells = self._bmap.pcolor(
             self.x, self.y,
-            self.current_values[zl / 2::zl, zl / 2::zl],
+            self.current_values[zs / 2::zs, zs / 2::zs],
             **self.pcolor_options)
 
         self._bmap.drawcoastlines(color='w')
         self._bmap.drawcountries(color='w')
 
-        self.cidpress = self.canvas.mpl_connect('button_press_event',
-            self.on_press)
-        self.cidrelease = self.canvas.mpl_connect('button_release_event',
-            self.on_release)
+        if zs == 1:
+            self.cidpress = self.canvas.mpl_connect('button_press_event',
+                self.on_press)
+            self.cidrelease = self.canvas.mpl_connect('button_release_event',
+                self.on_release)
 
         self.canvas.draw()
 
@@ -155,12 +161,13 @@ class MplFigure(Figure):
         print 'release: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' % (
             event.button, event.x, event.y, event.xdata, event.ydata)
         if self.event.x == event.x and self.event.y == event.y:
-            x, y = self._bmap(self.X, self.Y)
-            posx, posy = self._calc_pos(x, y, event.xdata, event.ydata)
-            print 'clique -> posx:', posx, 'posy:', posy
-            self.depth_t[posy[0][0], posy[1][0]] = -5000
-            self.plot_grid()
-            print 'diffs:', self.compare_differences()
+            x, y = self._bmap(event.xdata, event.ydata, inverse=True)
+            posx, posy = self._calc_pos(self.X, self.Y, x, y)
+            self.selected_cell = (posx, posy)
+            self.selected_cell_changed()
+#            self.depth_t[posx, posy] = -5000
+#            self.plot_grid()
+#            print 'diffs:', self.compare_differences()
         else:
             print 'arraste: inicial'
             #self._calc_pos(self.x, event.xdata)
@@ -169,10 +176,25 @@ class MplFigure(Figure):
         self.event = None
 
     def _calc_pos(self, xarray, yarray, xvalue, yvalue):
-        e = 1000
-        px = np.where(abs(xarray - xvalue) < e)
-        py = np.where(abs(yarray - yvalue) < e)
-        return px, py
+        e = 1  # TODO: declare conditions for where, avoid hardcode
+        px = abs(xarray - xvalue) < e
+        py = abs(yarray - yvalue) < e
+        p = np.where(px & py)
+        return int(p[0][0]), int(p[1][0])
+
+    def set_changed_value_callback(self, widget, args):
+        #TODO: how to pass the closure?
+        pass
+
+    def selected_cell_changed(self):
+        # TODO: callback for Qt
+        print 'new cell: ', self.selected_cell
+
+    def selected_value(self):
+        return self.current_values[self.selected_cell[0], self.selected_cell[1]]
+
+    def change_position(self, x, y):
+        pass
 
     def get_plot_property(self, key):
         return self.options.get(key, None)

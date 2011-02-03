@@ -1,11 +1,10 @@
-check:
-	pep8 gridgen
-	pylint gridgen
+pep8:
+    pep8 gridgen
+
+pylint:
+    pylint gridgen
+
+check: pep8 pylint
 
 test:
-	pep8 tests
-	cp -R gridgen/ tests/gridgen
-	cp -R examples/data tests/data
-	- py.test --testdata=tests/data tests/
-	rm -rf tests/gridgen
-	rm -rf tests/data
+    pep8 tests
