@@ -180,7 +180,11 @@ class MplFigure(Figure):
         return self.current_values[self.selected_cell[0], self.selected_cell[1]]
 
     def change_position(self, x, y):
-        pass
+        lat = self.X[x, y]
+        lon = self.Y[x, y]
+        self.plot_grid(lat_0=lat, lon_0=lon)
+        self.selected_cell = (x, y)
+        self.selected_cell_changed()
 
     def change_value(self, new_value):
         if self.selected_cell:

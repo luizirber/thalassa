@@ -79,7 +79,7 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
             new_y = float(self.yPosEdit.text())
         except ValueError:
             pass # TODO: raise error
-        self._figure.change_position(x, y)
+        self._figure.change_position(new_x, new_y)
 
     @QtCore.pyqtSignature('bool')
     def on_valueRangeButton_clicked(self):
