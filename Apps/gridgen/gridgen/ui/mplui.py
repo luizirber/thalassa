@@ -20,7 +20,7 @@ class MplFigure(Figure):
         self.X = self.grid.X
         self.Y = self.grid.Y
         self.depth_t = self.grid.depth_t[:, :]
-        self.num_levels = self.grid.num_levels
+        self.num_levels = self.grid.num_levels[:, :]
         self.current_values = self.depth_t
 
         self.options = {
@@ -65,6 +65,7 @@ class MplFigure(Figure):
         self.zoom_level = self._calc_zoom_level()
         self.max_zoom_level = self._max_zoom_level()
         self.selected_cell = None
+        self.changed_value_cb = None
 
         self._bmap = None
         self.cidpress = None
@@ -145,13 +146,9 @@ class MplFigure(Figure):
         self.canvas.draw()
 
     def on_press(self, event):
-        print 'press: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' % (
-            event.button, event.x, event.y, event.xdata, event.ydata)
         self.event = event
 
     def on_release(self, event):
-        print 'release: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' % (
-            event.button, event.x, event.y, event.xdata, event.ydata)
         if self.event.x == event.x and self.event.y == event.y:
             x, y = self._bmap(event.xdata, event.ydata, inverse=True)
             posx, posy = self._calc_pos(self.X, self.Y, x, y)
@@ -159,12 +156,6 @@ class MplFigure(Figure):
             self.selected_cell_changed()
 #            self.depth_t[posx, posy] = -5000
 #            self.plot_grid()
-#            print 'diffs:', self.compare_differences()
-        else:
-            print 'arraste: inicial'
-            #self._calc_pos(self.x, event.xdata)
-            print 'final: '
-            #self._calc_pos(self.x, event.xdata)
         self.event = None
 
     def _calc_pos(self, xarray, yarray, xvalue, yvalue):
@@ -174,19 +165,36 @@ class MplFigure(Figure):
         p = np.where(px & py)
         return int(p[0][0]), int(p[1][0])
 
-    def set_changed_value_callback(self, widget, args):
-        #TODO: how to pass the closure?
-        pass
+    def set_changed_value_callback(self, func, args=None):
+        self.changed_value_cb = (func, args)
 
     def selected_cell_changed(self):
-        # TODO: callback for Qt
-        print 'new cell: ', self.selected_cell
+        if self.changed_value_cb:
+            func, args = self.changed_value_cb
+            if args:
+                func(args)
+            else:
+                func()
 
     def selected_value(self):
         return self.current_values[self.selected_cell[0], self.selected_cell[1]]
 
     def change_position(self, x, y):
         pass
+
+    def change_value(self, new_value):
+        if self.selected_cell:
+            px, py = self.selected_cell
+            self.current_values[px, py] = new_value
+            self.plot_grid()
+
+    def save_diff(self, filename):
+        if self.current_values is self.depth_t:
+            variable = 'depth_t'
+        else:
+            variable = 'num_levels'
+        diffs = self.grid.compare_differences(variable, self.current_values)
+        self.grid.save_differences(filename, diffs)
 
     def get_plot_property(self, key):
         return self.options.get(key, None)
@@ -208,7 +216,6 @@ class MplFigure(Figure):
 #            self.options['resolution'] = 'l'
 #        elif self.zoom_level < 7:
 #            self.options['resolution'] = 'i'
-        print 'zl', self.zoom_level
 
     def _from_zoom_level(self, level):
         #TODO: verify if level is valid
@@ -311,10 +318,6 @@ class MplFigure(Figure):
                 changed = True
 #        return changed or not self._bmap # TODO: is it needed to test this?
         return True
-
-    def compare_differences(self):
-        return self.grid.compare_differences('depth_t', self.depth_t)
-
 
 class MplUI(FigureCanvas, UI):
 

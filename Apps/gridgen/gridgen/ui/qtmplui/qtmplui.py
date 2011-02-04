@@ -17,18 +17,14 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         self.setupUi(self)
         self._figure = None
 
-#        self._figure.set_change_value_callback()
-
         self.statusBar().showMessage("GEA-INPE", 2011)
 
     @QtCore.pyqtSignature('bool')
     def on_actionOpen_triggered(self, checked):
         default_path = 'examples/data/grids_tupa/'
         filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file', default_path)
-        print filename
         # TODO: open a dialog, showing the error if this doesn't work.
         raw_grid = MOM4Grid(filename)
-
         raw_grid.fix()
 
         self._figure = MplFigure(raw_grid)
@@ -37,6 +33,7 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         self.updateLatLonEdits()
         self.updateMinMaxValueEdits()
         self.updateZoomSlider()
+        self._figure.set_changed_value_callback(self.updateCellValueEdit)
 
     def updateLatLonEdits(self):
         self.latEdit.setText(str(self._figure.get_plot_property('lat_0')))
@@ -53,7 +50,7 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
     def updateCellValueEdit(self):
         if self._figure.selected_cell:
             new_value = self._figure.selected_value()
-            self.cellValueEdit.setText(str(new_value))
+            self.cellValueEdit.setText("%.2f" % new_value)
 
     @QtCore.pyqtSignature('bool')
     def on_goLatLonButton_clicked(self, checked):
@@ -70,11 +67,9 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         # TODO: validade inputs
         self._figure.plot_grid(lat_0=new_lat, lon_0=new_lon)
         self.updateLatLonEdits()
-        print 'new position!!'
 
     @QtCore.pyqtSignature('bool')
     def on_goMatXYButton_clicked(self):
-        print 'changed via matrix position!'
         try:
             new_x = float(self.xPosEdit.text())
         except ValueError:
@@ -88,7 +83,6 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
 
     @QtCore.pyqtSignature('bool')
     def on_valueRangeButton_clicked(self):
-        print 'change range!'
         try:
             new_min = float(self.minEdit.text())
         except ValueError:
@@ -103,64 +97,62 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
 
     @QtCore.pyqtSignature('bool')
     def on_changeValueButton_clicked(self):
-        print 'change value!'
+        new_value = float(self.cellValueEdit.text())
         self._figure.change_value(new_value)
 
     @QtCore.pyqtSignature('bool')
     def on_depthRadioButton_toggled(self, checked=False):
-        print 'plot depth'
         self._figure.plot_depth_t()
         self.updateMinMaxValueEdits()
 
     @QtCore.pyqtSignature('bool')
     def on_levelsRadioButton_toggled(self, checked=False):
-        print 'plot levels'
         self._figure.plot_num_levels()
         self.updateMinMaxValueEdits()
 
     @QtCore.pyqtSignature('bool')
     def on_moveUpButton_clicked(self, checked):
-        print 'up!'
         self._figure.rotate(lat_delta=5)
         self.updateLatLonEdits()
 
     @QtCore.pyqtSignature('bool')
     def on_moveDownButton_clicked(self):
-        print 'down!'
         self._figure.rotate(lat_delta=-5)
         self.updateLatLonEdits()
 
     @QtCore.pyqtSignature('bool')
     def on_moveLeftButton_clicked(self):
-        print 'left!'
         self._figure.rotate(lon_delta=-5)
         self.updateLatLonEdits()
 
     @QtCore.pyqtSignature('bool')
     def on_moveRightButton_clicked(self):
-        print 'right!'
         self._figure.rotate(lon_delta=5)
         self.updateLatLonEdits()
 
     @QtCore.pyqtSignature('bool')
     def on_zoomInButton_clicked(self):
-        print 'zoom in!'
         self._figure.zoom_in()
         self.updateZoomSlider()
 
     @QtCore.pyqtSignature('bool')
     def on_zoomOutButton_clicked(self):
-        print 'zoom out!'
         self._figure.zoom_out()
         self.updateZoomSlider()
 
     def on_zoomSlider_sliderReleased(self):
-        print 'slider released', self.zoomSlider.value()
         self._figure.zoom(self.zoomSlider.value())
 
     @QtCore.pyqtSignature('bool')
     def on_actionQuit_triggered(self, checked):
         self.close()
+
+    @QtCore.pyqtSignature('bool')
+    def on_actionSave_triggered(self, checked):
+        # TODO: return error when location is invalid?
+        default_path = 'examples/data/grids_tupa/'
+        filename = QtGui.QFileDialog.getSaveFileName(self, 'Save file', default_path)
+        self._figure.save_diff(filename)
 
     def closeEvent(self, ce):
         self.close()

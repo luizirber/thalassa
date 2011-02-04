@@ -2,6 +2,37 @@
 # -*- coding: utf-8 -*-
 
 from distutils.core import setup
+from os.path import isdir, exists, join, walk, splitext
+
+class build_qt(build):
+    def compile_ui(self, ui_file, py_file=None):
+        if py_file is None:
+            py_file = splitext(ui_file)[0] + ".py"
+        try:
+            from PyQt4 import uic
+            fp = open(py_file, 'w')
+            uic.compileUi(ui_file, fp)
+            fp.close()
+            print "compiled", ui_file, "into", py_file
+        except Exception, e:
+            print 'Unable to compile user interface', e
+            return
+
+    def compile_rc(self, qrc_file, py_file=None):
+        if py_file is None:
+            py_file = splitext(qrc_file)[0] + "_rc.py"
+        if os.system('pyrcc4 "%s" -o "%s"' % (qrc_file, py_file)) > 0:
+            print "Unable to generate python module for resource file", qrc_file
+
+    def run(self):
+        for dirpath, _, filenames in os.walk('data'):
+            for filename in filenames:
+                if filename.endswith('.ui'):
+                    self.compile_ui(join(dirpath, filename),
+                        os.path.join('gridgen', 'ui', ''))
+                elif filename.endswith('.qrc'):
+                    self.compile_rc(join(dirpath, filename))
+        build.run(self)
 
 classifiers = """\
 Development Status :: 3 - Alpha

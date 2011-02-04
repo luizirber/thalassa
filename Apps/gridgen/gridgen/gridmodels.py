@@ -49,4 +49,13 @@ class MOM4Grid(Grid):
 
     def compare_differences(self, variable, cmpe):
         diff = (self.data.variables[variable] == cmpe)
-        return np.where(diff == False)
+        px, py = np.where(diff == False)
+        cmpes = []
+        for x, y in zip(px, py):
+            cmpes.append(cmpe[x][y])
+        return zip(px, py, cmpes)
+
+    def save_differences(self, filename, diffs):
+        f = open(filename, 'w')
+        f.writelines([('%d, %d, %.2f\n' % p) for p in diffs])
+        f.close()
