@@ -44,6 +44,8 @@ class MOM4Grid(Grid):
 
         self.X = X
         self.Y = Y
+        self.x_vert_T = x_vert_T
+        self.y_vert_T = y_vert_T
         self.depth_t = depth_t
         self.num_levels = num_levels
 

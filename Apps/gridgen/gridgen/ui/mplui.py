@@ -151,17 +151,19 @@ class MplFigure(Figure):
     def on_release(self, event):
         if self.event.x == event.x and self.event.y == event.y:
             x, y = self._bmap(event.xdata, event.ydata, inverse=True)
-            posx, posy = self._calc_pos(self.X, self.Y, x, y)
+            posx, posy = self._calc_pos(self.grid.x_vert_T, self.grid.y_vert_T, x, y)
             self.selected_cell = (posx, posy)
             self.selected_cell_changed()
 #            self.depth_t[posx, posy] = -5000
 #            self.plot_grid()
         self.event = None
 
-    def _calc_pos(self, xarray, yarray, xvalue, yvalue):
-        e = 1  # TODO: declare conditions for where, avoid hardcode
-        px = abs(xarray - xvalue) < e
-        py = abs(yarray - yvalue) < e
+    def _calc_pos(self, xarray, yarray, x, y):
+#        e = 1  # TODO: declare conditions for where, avoid hardcode
+#        px = abs(xarray - x) < e
+#        py = abs(yarray - y) < e
+        px = (((xarray[2] > x) | (xarray[3] > x)) & ((xarray[1] < x) | (xarray[0] < x)))
+        py = (((yarray[2] > y) | (yarray[3] > y)) & ((yarray[1] < y) | (yarray[0] < y)))
         p = np.where(px & py)
         return int(p[0][0]), int(p[1][0])
 
