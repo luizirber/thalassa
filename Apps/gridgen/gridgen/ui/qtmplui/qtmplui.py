@@ -4,6 +4,7 @@ import sys
 
 from PyQt4 import QtGui, QtCore
 
+import gridgen
 from gridgen import MOM4Grid
 from gridgen.ui import UI, MplUI, MplFigure
 from gridgen.ui.qtmplui import Ui_QtMplWindow
@@ -19,22 +20,6 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
 
         self.statusBar().showMessage("GEA-INPE", 2011)
 
-    @QtCore.pyqtSignature('bool')
-    def on_actionOpen_triggered(self, checked):
-        default_path = 'examples/data/grids_tupa/'
-        filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file', default_path)
-        # TODO: open a dialog, showing the error if this doesn't work.
-        raw_grid = MOM4Grid(filename)
-        raw_grid.fix()
-
-        self._figure = MplFigure(raw_grid)
-        self.mapwidget.set_canvas(self._figure)
-        self._figure.plot_grid()
-        self.updateLatLonEdits()
-        self.updateMinMaxValueEdits()
-        self.updateZoomSlider()
-        self._figure.set_changed_value_callback(self.updateCellValueEdit)
-
     def updateLatLonEdits(self):
         self.latEdit.setText(str(self._figure.get_plot_property('lat_0')))
         self.lonEdit.setText(str(self._figure.get_plot_property('lon_0')))
@@ -47,10 +32,11 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         self.zoomSlider.setRange(0, self._figure.max_zoom_level)
         self.zoomSlider.setSliderPosition(self._figure.zoom_level)
 
-    def updateCellValueEdit(self):
+    def updateCellValueEdits(self):
         if self._figure.selected_cell:
-            new_value = self._figure.selected_value()
-            self.cellValueEdit.setText("%.2f" % new_value)
+            depth_t, num_levels = self._figure.selected_value()
+            self.cellDepth_TEdit.setText("%.2f" % depth_t)
+            self.cellNum_LevelsEdit.setText("%d" % num_levels)
 
     @QtCore.pyqtSignature('bool')
     def on_goLatLonButton_clicked(self, checked):
@@ -96,9 +82,11 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         self.updateMinMaxValueEdits()
 
     @QtCore.pyqtSignature('bool')
-    def on_changeValueButton_clicked(self):
-        new_value = float(self.cellValueEdit.text())
-        self._figure.change_value(new_value)
+    def on_cellChangeValueButton_clicked(self):
+        new_depth_t = float(self.cellDepth_TEdit.text())
+        new_num_levels = int(self.cellNum_LevelsEdit.text())
+        self._figure.change_value(new_depth_t, new_num_levels)
+        self.updateCellValueEdits()
 
     @QtCore.pyqtSignature('bool')
     def on_depthRadioButton_toggled(self, checked=False):
@@ -140,6 +128,11 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         self._figure.zoom_out()
         self.updateZoomSlider()
 
+    @QtCore.pyqtSignature('int')
+    def on_resolutionComboBox_activated(self, index):
+        resolutions = ('c', 'l', 'i', 'h', 'f')
+        self._figure.plot_grid(resolution=resolutions[index])
+
     def on_zoomSlider_sliderReleased(self):
         self._figure.zoom(self.zoomSlider.value())
 
@@ -148,11 +141,36 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         self.close()
 
     @QtCore.pyqtSignature('bool')
-    def on_actionSave_triggered(self, checked):
+    def on_actionSaveGridChanges_triggered(self, checked):
         # TODO: return error when location is invalid?
         default_path = 'examples/data/grids_tupa/'
         filename = QtGui.QFileDialog.getSaveFileName(self, 'Save file', default_path)
         self._figure.save_diff(filename)
+
+    @QtCore.pyqtSignature('bool')
+    def on_actionOpenGrid_triggered(self, checked):
+        default_path = 'examples/data/grids_tupa/'
+        filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file', default_path)
+        # TODO: open a dialog, showing the error if this doesn't work.
+        grid = MOM4Grid(filename)
+        grid.fix()
+
+        self._figure = MplFigure(grid)
+        self.mapwidget.set_canvas(self._figure)
+        self._figure.plot_grid()
+        self.updateLatLonEdits()
+        self.updateMinMaxValueEdits()
+        self.updateZoomSlider()
+        self._figure.set_changed_value_callback(self.updateCellValueEdits)
+
+    @QtCore.pyqtSignature('bool')
+    def on_actionLoadGridChanges_triggered(self, checked):
+        default_path = 'examples/data/grids_tupa/'
+        filenames = QtGui.QFileDialog.getOpenFileNames(self, 'Load grid changes', default_path)
+        # TODO: open a dialog, showing the error if this doesn't work.
+        for filename in filenames:
+            self._figure.load_changes(filename)
+        self._figure.plot_grid()
 
     def closeEvent(self, ce):
         self.close()

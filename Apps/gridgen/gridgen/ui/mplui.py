@@ -134,6 +134,12 @@ class MplFigure(Figure):
             self.current_values[zs / 2::zs, zs / 2::zs],
             **self.pcolor_options)
 
+#        if self.selected_cell:
+#            self.cells = self._bmap.pcolor(
+#                self.x, self.y,
+#                self.current_values[zs / 2::zs, zs / 2::zs],
+#                **self.pcolor_options)
+
         self._bmap.drawcoastlines(color='w')
         self._bmap.drawcountries(color='w')
 
@@ -154,16 +160,41 @@ class MplFigure(Figure):
             posx, posy = self._calc_pos(self.grid.x_vert_T, self.grid.y_vert_T, x, y)
             self.selected_cell = (posx, posy)
             self.selected_cell_changed()
-#            self.depth_t[posx, posy] = -5000
-#            self.plot_grid()
+        else:  # multiple selection
+            lx, ly = self.event.xdata, self.event.ydata
+            cx, cy = event.xdata, event.ydata
+            if cx < lx :
+                cx, lx = lx, cx
+            if cy > ly:
+                cy, ly = ly, cy
+            cx, cy = self._bmap(cx, cy, inverse=True)
+            lx, ly = self._bmap(lx, ly, inverse=True)
+
+            ptx, pty, pbx, pby = self._calc_region(
+                self.grid.x_vert_T,
+                self.grid.y_vert_T,
+                cx, cy, lx, ly)
+
+            #ptx, pty = self._calc_pos(self.grid.x_vert_T, self.grid.y_vert_T, cx, cy)
+            #pbx, pby = self._calc_pos(self.grid.x_vert_T, self.grid.y_vert_T, lx, ly)
+
+            # TODO: corner cases. What if I select over one of the limits
+            # (north pole or vertical)?
+
+            print 'initial', (ptx, pty), 'final', (pbx, pby)
+
+
         self.event = None
 
     def _calc_pos(self, xarray, yarray, x, y):
-#        e = 1  # TODO: declare conditions for where, avoid hardcode
-#        px = abs(xarray - x) < e
-#        py = abs(yarray - y) < e
         px = (((xarray[2] > x) | (xarray[3] > x)) & ((xarray[1] < x) | (xarray[0] < x)))
-        py = (((yarray[2] > y) | (yarray[3] > y)) & ((yarray[1] < y) | (yarray[0] < y)))
+        py = (((yarray[2] > y) | (yarray[1] > y)) & ((yarray[3] < y) | (yarray[0] < y)))
+        p = np.where(px & py)
+        return int(p[0][0]), int(p[1][0])
+
+    def _calc_region(self, xarray, yarray, tx, ty, bx, by):
+        px = (((xarray[2] > tx) | (xarray[3] > tx)) & ((xarray[1] < bx) | (xarray[0] < bx)))
+        py = (((yarray[2] > ty) | (yarray[1] > ty)) & ((yarray[3] < by) | (yarray[0] < by)))
         p = np.where(px & py)
         return int(p[0][0]), int(p[1][0])
 
@@ -179,7 +210,8 @@ class MplFigure(Figure):
                 func()
 
     def selected_value(self):
-        return self.current_values[self.selected_cell[0], self.selected_cell[1]]
+        return (self.depth_t[self.selected_cell[0], self.selected_cell[1]],
+                self.num_levels[self.selected_cell[0], self.selected_cell[1]])
 
     def change_position(self, x, y):
         lat = self.X[x, y]
@@ -188,19 +220,40 @@ class MplFigure(Figure):
         self.selected_cell = (x, y)
         self.selected_cell_changed()
 
-    def change_value(self, new_value):
+    def change_value(self, depth_t, num_levels):
         if self.selected_cell:
             px, py = self.selected_cell
-            self.current_values[px, py] = new_value
+            if (self.num_levels[px, py] == num_levels and
+                self.depth_t[px, py] == depth_t):
+                # TODO: raise error, should change only one. Or just set depth_t
+                # and we're done?
+                pass
+            elif self.num_levels[px, py] != num_levels:
+                # TODO: review indexing with num_levels. When changing a value
+                # and then setting it back to previous they aren't equal.
+                self.num_levels[px, py] = num_levels
+                self.depth_t[px, py] = self.grid.zb[int(num_levels) - 1]
+            else:
+                self.change_value_for_pos(px, py, depth_t)
             self.plot_grid()
 
-    def save_diff(self, filename):
-        if self.current_values is self.depth_t:
-            variable = 'depth_t'
+    def change_value_for_pos(self, px, py, depth_t):
+        new_num_levels = np.where(self.grid.zb[:] >= depth_t)[0][0]
+        if new_num_levels > 0:
+            self.num_levels[px, py] = new_num_levels + 1
         else:
-            variable = 'num_levels'
-        diffs = self.grid.compare_differences(variable, self.current_values)
+            self.num_levels[px, py] = new_num_levels
+        self.depth_t[px, py] = depth_t
+
+    def save_diff(self, filename):
+        diffs = self.grid.compare_differences('depth_t', self.depth_t)
         self.grid.save_differences(filename, diffs)
+
+    def load_changes(self, filename):
+        changes = open(filename, 'r')
+        for change in changes:
+            py, px, value = change.split(',')
+            self.change_value_for_pos(int(px), int(py), float(value))
 
     def get_plot_property(self, key):
         return self.options.get(key, None)
@@ -303,6 +356,12 @@ class MplFigure(Figure):
             self.options['urcrnry'] = float(opts['urcrnry'])
             del opts['urcrnry']
             changed = True
+        if 'resolution' in opts:
+            resolutions = ('c', 'l', 'i', 'h', 'f')
+            if opts['resolution'] in resolutions:
+                self.options['resolution'] = str(opts['resolution'])
+                del opts['resolution']
+                changed = True
         return changed
 
     def _parse_pcolor_args(self, opts):

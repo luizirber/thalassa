@@ -27,6 +27,7 @@ class MOM4Grid(Grid):
         y_vert_T = self.data.variables['y_vert_T']
         depth_t = self.data.variables['depth_t']
         num_levels = self.data.variables['num_levels']
+        zb = self.data.variables['zb']
 
         z, y, x = x_vert_T.shape
 
@@ -48,6 +49,7 @@ class MOM4Grid(Grid):
         self.y_vert_T = y_vert_T
         self.depth_t = depth_t
         self.num_levels = num_levels
+        self.zb = zb
 
     def compare_differences(self, variable, cmpe):
         diff = (self.data.variables[variable] == cmpe)
@@ -55,7 +57,7 @@ class MOM4Grid(Grid):
         cmpes = []
         for x, y in zip(px, py):
             cmpes.append(cmpe[x][y])
-        return zip(px, py, cmpes)
+        return zip(py, px, cmpes)
 
     def save_differences(self, filename, diffs):
         f = open(filename, 'w')
