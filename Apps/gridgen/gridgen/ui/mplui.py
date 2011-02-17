@@ -240,10 +240,10 @@ class MplFigure(Figure):
     def change_value_for_pos(self, px, py, depth_t):
         new_num_levels = np.where(self.grid.zb[:] >= depth_t)[0][0]
         if new_num_levels > 0:
-            self.num_levels[px, py] = new_num_levels + 1
+            self.num_levels[px-1, py-1] = new_num_levels + 1
         else:
-            self.num_levels[px, py] = new_num_levels
-        self.depth_t[px, py] = depth_t
+            self.num_levels[px-1, py-1] = new_num_levels
+        self.depth_t[px-1, py-1] = depth_t
 
     def save_diff(self, filename):
         diffs = self.grid.compare_differences('depth_t', self.depth_t)

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import operator
+
 import numpy as np
 from netCDF4 import Dataset
 
@@ -57,7 +59,9 @@ class MOM4Grid(Grid):
         cmpes = []
         for x, y in zip(px, py):
             cmpes.append(cmpe[x][y])
-        return zip(py, px, cmpes)
+        return zip(map(operator.add, py, [1]*len(py)),
+                   map(operator.add, px, [1]*len(px)),
+                   cmpes)
 
     def save_differences(self, filename, diffs):
         f = open(filename, 'w')
