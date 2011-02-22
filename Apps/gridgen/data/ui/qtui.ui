@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>GridGen</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">
@@ -331,7 +331,7 @@
              </rect>
             </property>
             <property name="text">
-             <string>My</string>
+             <string>j</string>
             </property>
            </widget>
            <widget class="QLabel" name="latLabel_2">
@@ -344,7 +344,7 @@
              </rect>
             </property>
             <property name="text">
-             <string>Mx</string>
+             <string>i</string>
             </property>
            </widget>
            <widget class="QLineEdit" name="xPosEdit">

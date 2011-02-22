@@ -31,7 +31,7 @@ class MOM4Grid(Grid):
         num_levels = self.data.variables['num_levels']
         zb = self.data.variables['zb']
 
-        z, y, x = x_vert_T.shape
+        _, y, x = x_vert_T.shape
 
         X = np.zeros((y + 1, x + 1))
         X[:y, :x] = x_vert_T[0, :]

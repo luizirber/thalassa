@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import numpy as np
@@ -8,6 +7,7 @@ import numpy.ma as ma
 from numpy.lib.scimath import logn
 from mpl_toolkits import basemap
 
+import gridgen
 from gridgen.ui import UI
 
 
@@ -61,15 +61,20 @@ class MplFigure(Figure):
           'vmax': np.max(self.current_values),
         }
 
-        self.zoom_step = 2
+        self.zoom_step = 1.9
         self.zoom_level = self._calc_zoom_level()
         self.max_zoom_level = self._max_zoom_level()
         self.selected_cell = None
+        self.selected_cells = None
+        self.pointed_cell = None
+        self.pointed_cells = None
         self.changed_value_cb = None
+        self.pointed_value_cb = None
 
         self._bmap = None
         self.cidpress = None
         self.cidrelease = None
+        self.cidmotion = None
 
     def rotate(self, lat_delta=0, lon_delta=0):
         new_lat = self.options['lat_0'] + lat_delta
@@ -82,18 +87,13 @@ class MplFigure(Figure):
 
     def zoom_in(self):
         if self.zoom_level + 1 <= np.floor(self.max_zoom_level):
-            lx = self.options['llcrnrx'] / self.zoom_step
-            ly = self.options['llcrnry'] / self.zoom_step
-            ux = self.options['urcrnrx'] / self.zoom_step
-            uy = self.options['urcrnry'] / self.zoom_step
-            self.plot_grid(llcrnrx=lx, llcrnry=ly, urcrnrx=ux, urcrnry=uy)
+            p = self._from_zoom_level(self.zoom_level + 1)
+            self.plot_grid(llcrnrx=-p, llcrnry=-p, urcrnrx=p, urcrnry=p)
 
     def zoom_out(self):
-        lx = self.options['llcrnrx'] * self.zoom_step
-        ly = self.options['llcrnry'] * self.zoom_step
-        ux = self.options['urcrnrx'] * self.zoom_step
-        uy = self.options['urcrnry'] * self.zoom_step
-        self.plot_grid(llcrnrx=lx, llcrnry=ly, urcrnrx=ux, urcrnry=uy)
+        if self.zoom_level > 0:
+            p = self._from_zoom_level(self.zoom_level - 1)
+            self.plot_grid(llcrnrx=-p, llcrnry=-p, urcrnrx=p, urcrnry=p)
 
     def plot_depth_t(self):
         self.current_values = self.depth_t
@@ -107,47 +107,68 @@ class MplFigure(Figure):
         self.pcolor_options['vmax'] = np.max(self.current_values)
         self.plot_grid()
 
-    def plot_grid(self, *args, **kwargs):
-        self._parse_plot_args(kwargs)
-        self.clear()
+    def disconnect_signals(self):
         self.canvas.mpl_disconnect(self.cidpress)
         self.cidpress = None
         self.canvas.mpl_disconnect(self.cidrelease)
         self.cidrelease = None
+        self.canvas.mpl_disconnect(self.cidmotion)
+        self.cidmotion = None
+
+    def connect_signals(self):
+        self.cidpress = self.canvas.mpl_connect('button_press_event',
+            self.on_press)
+        self.cidrelease = self.canvas.mpl_connect('button_release_event',
+            self.on_release)
+#        self.cidmotion = self.canvas.mpl_connect('motion_notify_event',
+#            self.on_motion)
+
+    def plot_grid(self, *args, **kwargs):
+        self._parse_plot_args(kwargs)
+        self.clear()
+        self.disconnect_signals()
         self._calc_zoom_level()
         self._bmap = basemap.Basemap(**self.options)
-        self._bmap.ax = self.add_axes((0, 0, 1, 1))
+        self._bmap.ax = self.add_axes((0.05,0.10,0.9,0.9))
 
         self._parse_pcolor_args(kwargs)
-        zs = self._calc_step() or 1
+        zs = self._calc_step()
         x, y = self._bmap(self.X[::zs, ::zs], self.Y[::zs, ::zs])
         self.x = ma.masked_values(
-            np.where((x < self._bmap.llcrnrx * .9) |
-                     (x > self._bmap.urcrnrx * 1.1), 1.e30, x),
+            np.where((x < self._bmap.llcrnrx * .85) |
+                     (x > self._bmap.urcrnrx * 1.15), 1.e30, x),
             1.e30)
         self.y = ma.masked_values(
-            np.where((y < self._bmap.llcrnry * .9) |
-                     (y > self._bmap.urcrnry * 1.1), 1.e30, y),
+            np.where((y < self._bmap.llcrnry * .85) |
+                     (y > self._bmap.urcrnry * 1.15), 1.e30, y),
             1.e30)
         self.cells = self._bmap.pcolor(
             self.x, self.y,
             self.current_values[zs / 2::zs, zs / 2::zs],
             **self.pcolor_options)
 
-#        if self.selected_cell:
-#            self.cells = self._bmap.pcolor(
-#                self.x, self.y,
-#                self.current_values[zs / 2::zs, zs / 2::zs],
-#                **self.pcolor_options)
+        if False:#self.selected_cells:
+            #TODO: check ranges
+            posx, posy = self.selected_cells
+            selected = np.zeros((posx[1]-posx[0], posy[1]-posy[0]))
+            selected[:] = -5000
+            self.cells = self._bmap.pcolor(
+                self.x[posx[0]/zs:posx[1]/zs+1, posy[0]/zs:posy[1]/zs+1],
+                self.y[posx[0]/zs:posx[1]/zs+1, posy[0]/zs:posy[1]/zs+1],
+                selected,
+                **self.pcolor_options)
 
         self._bmap.drawcoastlines(color='w')
         self._bmap.drawcountries(color='w')
 
-        if zs == 1:
-            self.cidpress = self.canvas.mpl_connect('button_press_event',
-                self.on_press)
-            self.cidrelease = self.canvas.mpl_connect('button_release_event',
-                self.on_release)
+        self.connect_signals()
+
+        pos = self._bmap.ax.get_position()
+        l, b, w, _ = pos.bounds
+        # create axes instance for colorbar on bottom.
+        cax = self.add_axes([l, b-0.07, w, 0.04])
+        # draw colorbar on bottom.
+        self.colorbar(self.cells, cax=cax,orientation='horizontal')
 
         self.canvas.draw()
 
@@ -157,11 +178,19 @@ class MplFigure(Figure):
     def on_release(self, event):
         if self.event.x == event.x and self.event.y == event.y:
             x, y = self._bmap(event.xdata, event.ydata, inverse=True)
-            posx, posy = self._calc_pos(self.grid.x_vert_T, self.grid.y_vert_T, x, y)
-            self.selected_cell = (posx, posy)
+            posx, posy = self._calc_pos(
+                self.grid.x_vert_T,
+                self.grid.y_vert_T,
+                x, y)
+            self.selected_cells = (posx, posy)
+            self.selected_cell = (posx[0], posy[0])
             self.selected_cell_changed()
+            self.pointed_cells = (posx, posy)
+            self.pointed_cell = (posx[0], posy[0])
+            self.pointed_cell_changed(x, y)
+#            self.plot_grid()
         else:  # multiple selection
-            lx, ly = self.event.xdata, self.event.ydata
+            '''lx, ly = self.event.xdata, self.event.ydata
             cx, cy = event.xdata, event.ydata
             if cx < lx :
                 cx, lx = lx, cx
@@ -175,26 +204,50 @@ class MplFigure(Figure):
                 self.grid.y_vert_T,
                 cx, cy, lx, ly)
 
-            #ptx, pty = self._calc_pos(self.grid.x_vert_T, self.grid.y_vert_T, cx, cy)
-            #pbx, pby = self._calc_pos(self.grid.x_vert_T, self.grid.y_vert_T, lx, ly)
+            #ptx, pty = self._calc_pos(
+            #    self.grid.x_vert_T,
+            #    self.grid.y_vert_T,
+            #    cx, cy)
+            #pbx, pby = self._calc_pos(
+            #    self.grid.x_vert_T,
+            #    self.grid.y_vert_T,
+            #    lx, ly)
 
             # TODO: corner cases. What if I select over one of the limits
             # (north pole or vertical)?
 
-            print 'initial', (ptx, pty), 'final', (pbx, pby)
-
-
+            print 'initial', (ptx, pty), 'final', (pbx, pby)'''
+            pass
         self.event = None
 
+    def on_motion(self, event):
+        x, y = self._bmap(event.xdata, event.ydata, inverse=True)
+        posx, posy = self._calc_pos(
+            self.grid.x_vert_T,
+            self.grid.y_vert_T,
+            x, y)
+        self.pointed_cell = (posx[0], posy[0])
+        self.pointed_cell_changed(x, y)
+
     def _calc_pos(self, xarray, yarray, x, y):
-        px = (((xarray[2] > x) | (xarray[3] > x)) & ((xarray[1] < x) | (xarray[0] < x)))
-        py = (((yarray[2] > y) | (yarray[1] > y)) & ((yarray[3] < y) | (yarray[0] < y)))
+        px = (((xarray[2] > x) | (xarray[3] > x)) &
+              ((xarray[1] < x) | (xarray[0] < x)))
+        py = (((yarray[2] > y) | (yarray[1] > y)) &
+              ((yarray[3] < y) | (yarray[0] < y)))
         p = np.where(px & py)
-        return int(p[0][0]), int(p[1][0])
+        posx, posy = int(p[0][0]), int(p[1][0])
+        zs = self._calc_step()
+        xstart = posx - zs/2
+        xend = posx + zs/2
+        ystart = posy - zs/2
+        yend = posy + zs/2
+        return (xstart, xend), (ystart, yend)
 
     def _calc_region(self, xarray, yarray, tx, ty, bx, by):
-        px = (((xarray[2] > tx) | (xarray[3] > tx)) & ((xarray[1] < bx) | (xarray[0] < bx)))
-        py = (((yarray[2] > ty) | (yarray[1] > ty)) & ((yarray[3] < by) | (yarray[0] < by)))
+        px = (((xarray[2] > tx) | (xarray[3] > tx)) &
+              ((xarray[1] < bx) | (xarray[0] < bx)))
+        py = (((yarray[2] > ty) | (yarray[1] > ty)) &
+              ((yarray[3] < by) | (yarray[0] < by)))
         p = np.where(px & py)
         return int(p[0][0]), int(p[1][0])
 
@@ -213,26 +266,37 @@ class MplFigure(Figure):
         return (self.depth_t[self.selected_cell[0], self.selected_cell[1]],
                 self.num_levels[self.selected_cell[0], self.selected_cell[1]])
 
+    def set_pointed_value_callback(self, func, args=None):
+        self.pointed_value_cb = (func, args)
+
+    def pointed_cell_changed(self, lat, lon):
+        if self.pointed_value_cb:
+            func, args = self.pointed_value_cb
+            if args:
+                func(lat, lon, args)
+            else:
+                func(lat, lon)
+
     def change_position(self, x, y):
-        lat = self.X[x, y]
-        lon = self.Y[x, y]
+        lon = self.X[x, y]
+        lat = self.Y[x, y]
         self.plot_grid(lat_0=lat, lon_0=lon)
         self.selected_cell = (x, y)
         self.selected_cell_changed()
 
     def change_value(self, depth_t, num_levels):
-        if self.selected_cell:
-            px, py = self.selected_cell
-            if (self.num_levels[px, py] == num_levels and
-                self.depth_t[px, py] == depth_t):
-                # TODO: raise error, should change only one. Or just set depth_t
-                # and we're done?
+        if self.selected_cells:
+            px, py = self.selected_cells
+            # TODO: check the middle cell, not the first, to follow the
+            # shown value at the edits
+            if (self.num_levels[px[0], py[0]] == num_levels and
+                self.depth_t[px[0], py[0]] == depth_t):
+                # TODO: raise error, should change only one. Or just set
+                # depth_t and we're done?
                 pass
-            elif self.num_levels[px, py] != num_levels:
-                # TODO: review indexing with num_levels. When changing a value
-                # and then setting it back to previous they aren't equal.
-                self.num_levels[px, py] = num_levels
-                self.depth_t[px, py] = self.grid.zb[int(num_levels) - 1]
+            elif self.num_levels[px[0], py[0]] != num_levels:
+                self.num_levels[px[0]:px[1], py[0]:py[1]] = num_levels
+                self.depth_t[px[0], py[0]] = self.grid.zb[int(num_levels) - 1]
             else:
                 self.change_value_for_pos(px, py, depth_t)
             self.plot_grid()
@@ -240,10 +304,20 @@ class MplFigure(Figure):
     def change_value_for_pos(self, px, py, depth_t):
         new_num_levels = np.where(self.grid.zb[:] >= depth_t)[0][0]
         if new_num_levels > 0:
-            self.num_levels[px-1, py-1] = new_num_levels + 1
+            if px[0] == px[1]:
+                self.num_levels[px[0], py[0]] = new_num_levels + 1
+            else:
+                self.num_levels[px[0]:px[1], py[0]:py[1]] = new_num_levels + 1
         else:
-            self.num_levels[px-1, py-1] = new_num_levels
-        self.depth_t[px-1, py-1] = depth_t
+            if px[0] == px[1]:
+                self.num_levels[px[0], py[0]] = new_num_levels
+            else:
+                self.num_levels[px[0]:px[1], py[0]:py[1]] = new_num_levels
+
+        if px[0] == px[1]:
+            self.depth_t[px[0], py[0]] = depth_t
+        else:
+            self.depth_t[px[0]:px[1], py[0]:py[1]] = depth_t
 
     def save_diff(self, filename):
         diffs = self.grid.compare_differences('depth_t', self.depth_t)
@@ -253,7 +327,7 @@ class MplFigure(Figure):
         changes = open(filename, 'r')
         for change in changes:
             py, px, value = change.split(',')
-            self.change_value_for_pos(int(px), int(py), float(value))
+            self.change_value_for_pos(int(px)-1, int(py)-1, float(value))
 
     def get_plot_property(self, key):
         return self.options.get(key, None)
@@ -277,9 +351,15 @@ class MplFigure(Figure):
 #            self.options['resolution'] = 'i'
 
     def _from_zoom_level(self, level):
-        #TODO: verify if level is valid
-        p = (self.options['rsphere'] / self.zoom_step ** (level - 1)) / 2
-        self.zoom_level = level
+        if level > 0 and level <= self.max_zoom_level:
+            p = (self.options['rsphere'] / self.zoom_step ** (level - 1)) / 2
+            self.zoom_level = level
+        elif level > self.max_zoom_level:
+            p = (self.options['rsphere'] / self.zoom_step ** (level - 1)) / 2
+            self.zoom_level = self.max_zoom_level
+        else:
+            p = self.options['rsphere']
+            self.zoom_level = 0
         return p
 
     def _max_zoom_level(self):
@@ -290,7 +370,10 @@ class MplFigure(Figure):
         self._calc_zoom_level()
         self._max_zoom_level()
         items = max(self.current_values.shape)
-        return items / (self.zoom_step ** (self.zoom_level + 6))
+        zs = int(items / (self.zoom_step ** (self.zoom_level + 6)))
+        if zs < 1:
+            zs = 1
+        return zs
 
     def _parse_plot_args(self, opts):
         changed = False
@@ -383,6 +466,7 @@ class MplFigure(Figure):
                 changed = True
 #        return changed or not self._bmap # TODO: is it needed to test this?
         return True
+
 
 class MplUI(FigureCanvas, UI):
 

@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 
-import sys
-
 from PyQt4 import QtGui, QtCore
 
-import gridgen
 from gridgen import MOM4Grid
-from gridgen.ui import UI, MplUI, MplFigure
+from gridgen.ui import UI, MplFigure
 from gridgen.ui.qtmplui import Ui_QtMplWindow
-from gridgen.ui.qtmplui import QtMplCanvas, QtMplWidget
 
 
 class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
@@ -57,15 +53,15 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
     @QtCore.pyqtSignature('bool')
     def on_goMatXYButton_clicked(self):
         try:
-            new_x = float(self.xPosEdit.text())
+            new_x = int(self.xPosEdit.text())
         except ValueError:
             pass # TODO: raise error
 
         try:
-            new_y = float(self.yPosEdit.text())
+            new_y = int(self.yPosEdit.text())
         except ValueError:
             pass # TODO: raise error
-        self._figure.change_position(new_x, new_y)
+        self._figure.change_position(new_x-1, new_y-1)
 
     @QtCore.pyqtSignature('bool')
     def on_valueRangeButton_clicked(self):
@@ -144,13 +140,19 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
     def on_actionSaveGridChanges_triggered(self, checked):
         # TODO: return error when location is invalid?
         default_path = 'examples/data/grids_tupa/'
-        filename = QtGui.QFileDialog.getSaveFileName(self, 'Save file', default_path)
+        filename = QtGui.QFileDialog.getSaveFileName(
+            self,
+            'Save file',
+            default_path)
         self._figure.save_diff(filename)
 
     @QtCore.pyqtSignature('bool')
     def on_actionOpenGrid_triggered(self, checked):
         default_path = 'examples/data/grids_tupa/'
-        filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file', default_path)
+        filename = QtGui.QFileDialog.getOpenFileName(
+            self,
+            'Open file',
+            default_path)
         # TODO: open a dialog, showing the error if this doesn't work.
         grid = MOM4Grid(filename)
         grid.fix()
