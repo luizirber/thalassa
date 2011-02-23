@@ -242,7 +242,7 @@ class MplFigure(Figure):
            cond = self._inside_poly(
                self.grid.x_vert_T,
                self.grid.y_vert_T,
-               (x,y)))
+               (x,y))
        p = np.where(cond)
        posx, posy = int(p[0][0]), int(p[1][0])
        zs = self._calc_step()
