@@ -125,14 +125,8 @@ class MOM4Grid(Grid):
     def _inside_poly(self, poly_x, poly_y, p):
         p1x = poly_x[:] - p[0]
         p1y = poly_y[:] - p[1]
-        tmpx = np.zeros(poly_x.shape, poly_x[:].dtype)
-        tmpx[0] = poly_x[3]
-        tmpx[1:] = poly_x[:3]
-        tmpy = np.zeros(poly_y.shape, poly_y[:].dtype)
-        tmpy[0] = poly_y[3]
-        tmpy[1:] = poly_y[:3]
-        p2x = tmpx - p[0]
-        p2y = tmpy - p[1]
+        p2x = np.roll(poly_x, 1, axis=0) - p[0]
+        p2y = np.roll(poly_y, 1, axis=0) - p[1]
         theta1 = np.arctan2(p1y, p1x)
         theta2 = np.arctan2(p2y, p2x)
         dtheta = (theta2 - theta1 + np.math.pi) % (2 * np.math.pi) - np.math.pi
