@@ -230,18 +230,27 @@ class MplFigure(Figure):
         self.pointed_cell_changed(x, y)
 
     def _calc_pos(self, xarray, yarray, x, y):
-        px = (((xarray[2] > x) | (xarray[3] > x)) &
-              ((xarray[1] < x) | (xarray[0] < x)))
-        py = (((yarray[2] > y) | (yarray[1] > y)) &
-              ((yarray[3] < y) | (yarray[0] < y)))
-        p = np.where(px & py)
-        posx, posy = int(p[0][0]), int(p[1][0])
-        zs = self._calc_step()
-        xstart = posx - zs/2
-        xend = posx + zs/2
-        ystart = posy - zs/2
-        yend = posy + zs/2
-        return (xstart, xend), (ystart, yend)
+       posx = posy = 0
+       if y <= self.grid.join_lat:
+           # Still using this method because it's much quicker
+           px = (((xarray[2] > x) | (xarray[3] > x)) &
+                 ((xarray[1] < x) | (xarray[0] < x)))
+           py = (((yarray[2] > y) | (yarray[1] > y)) &
+                 ((yarray[3] < y) | (yarray[0] < y)))
+           cond = px & py
+       else:
+           cond = self._inside_poly(
+               self.grid.x_vert_T,
+               self.grid.y_vert_T,
+               (x,y)))
+       p = np.where(cond)
+       posx, posy = int(p[0][0]), int(p[1][0])
+       zs = self._calc_step()
+       xstart = posx - zs/2
+       xend = posx + zs/2
+       ystart = posy - zs/2
+       yend = posy + zs/2
+       return (xstart, xend), (ystart, yend)
 
     def _calc_region(self, xarray, yarray, tx, ty, bx, by):
         px = (((xarray[2] > tx) | (xarray[3] > tx)) &
@@ -250,6 +259,23 @@ class MplFigure(Figure):
               ((yarray[3] < by) | (yarray[0] < by)))
         p = np.where(px & py)
         return int(p[0][0]), int(p[1][0])
+
+    def _inside_poly(self, poly_x, poly_y, p):
+        p1x = poly_x[:] - p[0]
+        p1y = poly_y[:] - p[1]
+        tmpx = np.zeros(poly_x.shape, poly_x[:].dtype)
+        tmpx[0] = poly_x[3]
+        tmpx[1:] = poly_x[:3]
+        tmpy = np.zeros(poly_y.shape, poly_y[:].dtype)
+        tmpy[0] = poly_y[3]
+        tmpy[1:] = poly_y[:3]
+        p2x = tmpx - p[0]
+        p2y = tmpy - p[1]
+        theta1 = np.arctan2(p1y, p1x)
+        theta2 = np.arctan2(p2y, p2x)
+        dtheta = (theta2 - theta1 + np.math.pi) % (2*np.math.pi) - np.math.pi
+        dtheta = sum(dtheta, 0)
+        return abs(dtheta) >= np.math.pi
 
     def set_changed_value_callback(self, func, args=None):
         self.changed_value_cb = (func, args)
@@ -287,37 +313,39 @@ class MplFigure(Figure):
     def change_value(self, depth_t, num_levels):
         if self.selected_cells:
             px, py = self.selected_cells
+            if px[0] == px[1]:
+                sx = px[0]
+                sy = py[0]
+            else:
+                sx = slice(px[0], px[1])
+                sy = slice(py[0], py[1])
             # TODO: check the middle cell, not the first, to follow the
             # shown value at the edits
             if (self.num_levels[px[0], py[0]] == num_levels and
                 self.depth_t[px[0], py[0]] == depth_t):
-                # TODO: raise error, should change only one. Or just set
-                # depth_t and we're done?
-                pass
+                # TODO: raise error, should change only one. Just setting
+                # depth_t and we're done for now.
+                self.change_value_for_pos(px, py, depth_t)
             elif self.num_levels[px[0], py[0]] != num_levels:
-                self.num_levels[px[0]:px[1], py[0]:py[1]] = num_levels
-                self.depth_t[px[0], py[0]] = self.grid.zb[int(num_levels) - 1]
+                self.num_levels[sx, sy] = num_levels
+                self.depth_t[sx, sy] = self.grid.zb[int(num_levels) - 1]
             else:
                 self.change_value_for_pos(px, py, depth_t)
             self.plot_grid()
 
     def change_value_for_pos(self, px, py, depth_t):
         new_num_levels = np.where(self.grid.zb[:] >= depth_t)[0][0]
-        if new_num_levels > 0:
-            if px[0] == px[1]:
-                self.num_levels[px[0], py[0]] = new_num_levels + 1
-            else:
-                self.num_levels[px[0]:px[1], py[0]:py[1]] = new_num_levels + 1
-        else:
-            if px[0] == px[1]:
-                self.num_levels[px[0], py[0]] = new_num_levels
-            else:
-                self.num_levels[px[0]:px[1], py[0]:py[1]] = new_num_levels
-
         if px[0] == px[1]:
-            self.depth_t[px[0], py[0]] = depth_t
+            sx = px[0]
+            sy = py[0]
         else:
-            self.depth_t[px[0]:px[1], py[0]:py[1]] = depth_t
+            sx = slice(px[0], px[1])
+            sy = slice(py[0], py[1])
+        if new_num_levels > 0:
+            self.num_levels[sx, sy] = new_num_levels + 1
+        else:
+            self.num_levels[sx, sy] = new_num_levels
+        self.depth_t[sx, sy] = depth_t
 
     def save_diff(self, filename):
         diffs = self.grid.compare_differences('depth_t', self.depth_t)

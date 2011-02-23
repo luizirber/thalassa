@@ -14,7 +14,8 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         self.setupUi(self)
         self._figure = None
 
-        self.statusBar().showMessage("GEA-INPE", 2011)
+        self.positionLabel = QtGui.QLabel('teste')
+        self.statusBar().addPermanentWidget(self.positionLabel, 10)
 
     def updateLatLonEdits(self):
         self.latEdit.setText(str(self._figure.get_plot_property('lat_0')))
@@ -33,6 +34,18 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
             depth_t, num_levels = self._figure.selected_value()
             self.cellDepth_TEdit.setText("%.2f" % depth_t)
             self.cellNum_LevelsEdit.setText("%d" % num_levels)
+
+    def updatePositionLabel(self, lat=0, lon=0):
+        text_items = []
+        if self._figure.pointed_cell:
+            text_items.append(("Lat: %.2f | Lon: %.2f | i: %d | j: %d" % (
+                lat, lon, self._figure.pointed_cell[0],
+                self._figure.pointed_cell[1])))
+        if self._figure.selected_cell:
+            text_items.append(("selected -> i: %d | j: %d" % (
+                self._figure.selected_cell[0],
+                self._figure.selected_cell[1])))
+        self.positionLabel.setText(' || '.join(text_items))
 
     @QtCore.pyqtSignature('bool')
     def on_goLatLonButton_clicked(self, checked):
@@ -164,6 +177,7 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         self.updateMinMaxValueEdits()
         self.updateZoomSlider()
         self._figure.set_changed_value_callback(self.updateCellValueEdits)
+        self._figure.set_pointed_value_callback(self.updatePositionLabel)
 
     @QtCore.pyqtSignature('bool')
     def on_actionLoadGridChanges_triggered(self, checked):

@@ -52,6 +52,7 @@ class MOM4Grid(Grid):
         self.depth_t = depth_t
         self.num_levels = num_levels
         self.zb = zb
+        self.join_lat = self.data.join_lat
 
     def compare_differences(self, variable, cmpe):
         diff = (self.data.variables[variable] == cmpe)
