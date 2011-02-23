@@ -4,6 +4,7 @@ from PyQt4 import QtGui
 
 from gridgen.ui.qtmplui import QtMplCanvas
 
+
 class QtMplWidget(QtGui.QWidget):
 
     def __init__(self, parent=None):

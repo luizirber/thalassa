@@ -1,10 +1,14 @@
 pep8:
-    pep8 gridgen
+	pep8 --exclude="gridgen_rc.py,qtui.py" gridgen
 
 pylint:
-    pylint gridgen
+	pylint -d c --ignore=gridgen_rc.py --ignore=qtui.py gridgen
 
-check: pep8 pylint
+pyflakes:
+	pyflakes gridgen
 
-test:
-    pep8 tests
+clonedigger:
+	- rm gridgen/ui/qtmplui/qtui.py gridgen/ui/qtmplui/gridgen_rc.py
+	clonedigger -o tests/output.html gridgen
+
+check: pep8 pylint pyflakes clonedigger

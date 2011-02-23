@@ -52,12 +52,12 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         try:
             new_lat = float(self.latEdit.text())
         except ValueError:
-            pass # TODO: raise error
+            pass  # TODO: raise error
 
         try:
             new_lon = float(self.lonEdit.text())
         except ValueError:
-            pass # TODO: raise error
+            pass  # TODO: raise error
 
         # TODO: validade inputs
         self._figure.plot_grid(lat_0=new_lat, lon_0=new_lon)
@@ -68,25 +68,25 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         try:
             new_x = int(self.xPosEdit.text())
         except ValueError:
-            pass # TODO: raise error
+            pass  # TODO: raise error
 
         try:
             new_y = int(self.yPosEdit.text())
         except ValueError:
-            pass # TODO: raise error
-        self._figure.change_position(new_x-1, new_y-1)
+            pass  # TODO: raise error
+        self._figure.change_position(new_x - 1, new_y - 1)
 
     @QtCore.pyqtSignature('bool')
     def on_valueRangeButton_clicked(self):
         try:
             new_min = float(self.minEdit.text())
         except ValueError:
-            pass # TODO: raise error
+            pass  # TODO: raise error
 
         try:
             new_max = float(self.maxEdit.text())
         except ValueError:
-            pass # TODO: raise error
+            pass  # TODO: raise error
         self._figure.plot_grid(vmin=new_min, vmax=new_max)
         self.updateMinMaxValueEdits()
 
@@ -168,7 +168,6 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
             default_path)
         # TODO: open a dialog, showing the error if this doesn't work.
         grid = MOM4Grid(filename)
-        grid.fix()
 
         self._figure = MplFigure(grid)
         self.mapwidget.set_canvas(self._figure)
@@ -182,7 +181,9 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
     @QtCore.pyqtSignature('bool')
     def on_actionLoadGridChanges_triggered(self, checked):
         default_path = 'examples/data/grids_tupa/'
-        filenames = QtGui.QFileDialog.getOpenFileNames(self, 'Load grid changes', default_path)
+        filenames = QtGui.QFileDialog.getOpenFileNames(self,
+            'Load grid changes',
+            default_path)
         # TODO: open a dialog, showing the error if this doesn't work.
         for filename in filenames:
             self._figure.load_changes(filename)
