@@ -7,8 +7,17 @@ pylint:
 pyflakes:
 	pyflakes gridgen
 
-clonedigger:
-	- rm gridgen/ui/qtmplui/qtui.py gridgen/ui/qtmplui/gridgen_rc.py
+clonedigger: clean
 	clonedigger -o tests/output.html gridgen
 
 check: pep8 pylint pyflakes clonedigger
+
+clean:
+	- rm gridgen/ui/qtmplui/qtui.py gridgen/ui/qtmplui/gridgen_rc.py
+	- rm -rf dist build MANIFEST
+
+build: clean
+	python setup.py build
+
+sdist: clean
+	python setup.py sdist

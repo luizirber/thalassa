@@ -1,13 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from distutils.core import setup
-from os.path import isdir, exists, join, walk, splitext
+from distutils.core import setup, Command
+from distutils.command.build import build as _build_orig
+import os
+from os.path import isdir, exists, join, splitext, split
 
-class build_qt(build):
-    def compile_ui(self, ui_file, py_file=None):
-        if py_file is None:
-            py_file = splitext(ui_file)[0] + ".py"
+class generate_qtui(Command):
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def compile_ui(self, ui_file, py_dir=None):
+        if py_dir is None:
+            py_dir = ''
+        py_file = join(py_dir, splitext(split(ui_file)[-1])[0] + ".py")
         try:
             from PyQt4 import uic
             fp = open(py_file, 'w')
@@ -18,21 +28,34 @@ class build_qt(build):
             print 'Unable to compile user interface', e
             return
 
-    def compile_rc(self, qrc_file, py_file=None):
-        if py_file is None:
-            py_file = splitext(qrc_file)[0] + "_rc.py"
+    def compile_rc(self, qrc_file, py_dir=None):
+        if py_dir is None:
+            py_dir = ''
+        py_file = join(py_dir, splitext(split(qrc_file)[-1])[0] + "_rc.py")
         if os.system('pyrcc4 "%s" -o "%s"' % (qrc_file, py_file)) > 0:
             print "Unable to generate python module for resource file", qrc_file
+        else:
+            print "compiled", qrc_file, "into", py_file
 
     def run(self):
         for dirpath, _, filenames in os.walk('data'):
             for filename in filenames:
                 if filename.endswith('.ui'):
                     self.compile_ui(join(dirpath, filename),
-                        os.path.join('gridgen', 'ui', ''))
+                        os.path.join('gridgen', 'ui', 'qtmplui'))
                 elif filename.endswith('.qrc'):
-                    self.compile_rc(join(dirpath, filename))
-        build.run(self)
+                    self.compile_rc(join(dirpath, filename),
+                        os.path.join('gridgen', 'ui', 'qtmplui'))
+
+class build(_build_orig):
+    sub_commands = [
+        ('generate_qtui', None)
+        ] + _build_orig.sub_commands
+
+cmdclass = {
+    'build': build,
+    'generate_qtui': generate_qtui,
+}
 
 classifiers = """\
 Development Status :: 3 - Alpha
@@ -54,13 +77,15 @@ setup(name             = 'gridgen',
       author_email     = 'luiz.irber@cptec.inpe.br',
       maintainer       = 'Luiz Irber',
       maintainer_email = 'luiz.irber@gmail.com',
-      url              = 'http://www.ccst.inpe.br',
+      url              = 'http://projetos.cptec.inpe.br/projects/gridgen',
       description      = 'Grid editor for ocean models',
       long_description = """\
 Grid editor for ocean models
 """,
       download_url     = 'http://pypi.python.org/packages/source/g/gridgen/',
-      packages         = ['gridgen', 'gridgen.ui'],
+      packages         = ['gridgen', 'gridgen.ui', 'gridgen.ui.qtmplui', 'gridgen.grid'],
+      scripts          = ["bin/gridgen"],
+      cmdclass         = cmdclass,
       classifiers      = filter(None, classifiers.split("\n")),
       platforms        = 'any',
       license          = 'GPL',
