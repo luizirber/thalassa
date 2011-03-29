@@ -21,3 +21,6 @@ build: clean
 
 sdist: clean
 	python setup.py sdist
+
+wininst: clean
+	python setup.py bdist --format=wininst

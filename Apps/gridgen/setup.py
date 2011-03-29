@@ -3,8 +3,10 @@
 
 from distutils.core import setup, Command
 from distutils.command.build import build as _build_orig
+from distutils.filelist import findall
 import os
-from os.path import isdir, exists, join, splitext, split
+from os.path import isdir, exists, join, splitext, split, dirname
+import sys
 
 class generate_qtui(Command):
 
@@ -57,6 +59,23 @@ cmdclass = {
     'generate_qtui': generate_qtui,
 }
 
+kwargs = {}
+data_files = []
+if 'py2exe' in sys.argv:
+    import py2exe
+    import matplotlib
+    import mpl_toolkits.basemap as basemap
+
+    data_files = matplotlib.get_py2exe_datafiles()
+    data_files.append((join('mpl_toolkits', 'basemap', 'data'),
+                       findall(join(dirname(basemap.__file__), 'data')) ))
+    kwargs['windows'] = [{'script': "bin/gridgen",
+                          'data_files': data_files}],
+    kwargs['options'] = {"py2exe": {"skip_archive":True,
+                                    "includes": ["sip", "netCDF4_utils",
+                                                 "netcdftime", "mpl_toolkits.basemap"],
+                                    "dll_excludes": ["MSVCP90.dll"]}},
+
 classifiers = """\
 Development Status :: 3 - Alpha
 Environment :: X11 Applications :: Qt
@@ -90,4 +109,5 @@ Grid editor for ocean models
       platforms        = 'any',
       license          = 'GPL',
       keywords         = 'oceanography modeling',
+      **kwargs
     )

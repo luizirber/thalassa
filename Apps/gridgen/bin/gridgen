@@ -2,14 +2,19 @@
 
 import sys
 import os
-from os.path import isdir, exists, join, walk, splitext, split
+from os.path import isdir, exists, join, walk, splitext, split, abspath
 
 from PyQt4 import QtGui
 import matplotlib
 matplotlib.use('QT4Agg')
 
-from gridgen.ui import QtMplUI
+try:
+    from gridgen.ui import QtMplUI
+except ImportError:
+    sys.path.append(abspath('../gridgen'))
 
+
+from gridgen.ui import QtMplUI
 
 qApp = QtGui.QApplication(sys.argv)
 

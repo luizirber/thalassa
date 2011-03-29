@@ -1,3 +1,4 @@
-include qt.py setup.py
+include setup.py
+recursive-include bin gridgen
 recursive-include gridgen *.py
 recursive-include data *.qrc *.ui *.png

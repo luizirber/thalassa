@@ -129,6 +129,7 @@ class MplFigure(Figure):
         self._calc_zoom_level()
         self._bmap = basemap.Basemap(**self.options)
         self._bmap.ax = self.add_axes((0.05, 0.10, 0.9, 0.9))
+        self._bmap.ax.set_axis_bgcolor('black')
 
         self._parse_pcolor_args(kwargs)
         zs = self._calc_step()
