@@ -13,7 +13,6 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         super(QtMplUI, self).__init__()
         self.setupUi(self)
         self._figure = None
-        self.fixed_value = False
 
         self.positionLabel = QtGui.QLabel('teste')
         self.statusBar().addPermanentWidget(self.positionLabel, 10)
