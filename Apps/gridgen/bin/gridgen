@@ -11,8 +11,9 @@ matplotlib.use('QT4Agg')
 try:
     from gridgen.ui import QtMplUI
 except ImportError:
-    sys.path.append(abspath('../gridgen'))
-
+    sys.path.append(abspath(join('..', 'gridgen')))
+    from setup_utils import build_qt_ui
+    build_qt_ui()
 
 from gridgen.ui import QtMplUI
 

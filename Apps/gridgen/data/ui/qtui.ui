@@ -406,7 +406,7 @@
         <property name="maximumSize">
          <size>
           <width>120</width>
-          <height>450</height>
+          <height>500</height>
          </size>
         </property>
         <property name="frameShape">
@@ -447,6 +447,13 @@
           <widget class="QPushButton" name="cellChangeValueButton">
            <property name="text">
             <string>Change</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="fixedCheckBox">
+           <property name="text">
+            <string>Fixed Value</string>
            </property>
           </widget>
          </item>

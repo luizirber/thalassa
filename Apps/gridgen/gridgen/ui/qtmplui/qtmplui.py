@@ -13,6 +13,7 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         super(QtMplUI, self).__init__()
         self.setupUi(self)
         self._figure = None
+        self.fixed_value = False
 
         self.positionLabel = QtGui.QLabel('teste')
         self.statusBar().addPermanentWidget(self.positionLabel, 10)
@@ -31,9 +32,20 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
 
     def updateCellValueEdits(self):
         if self._figure.selected_cell:
-            depth_t, num_levels = self._figure.selected_value()
-            self.cellDepth_TEdit.setText("%.2f" % depth_t)
-            self.cellNum_LevelsEdit.setText("%d" % num_levels)
+            if self.fixedCheckBox.isChecked():
+                try:
+                    new_depth_t = float(self.cellDepth_TEdit.text())
+                except ValueError:
+                    pass  # TODO: raise error
+                try:
+                    new_num_levels = int(self.cellNum_LevelsEdit.text())
+                except ValueError:
+                    pass  # TODO: raise error
+                self._figure.change_value(new_depth_t, new_num_levels)
+            else:
+                depth_t, num_levels = self._figure.selected_value()
+                self.cellDepth_TEdit.setText("%.2f" % depth_t)
+                self.cellNum_LevelsEdit.setText("%d" % num_levels)
 
     def updatePositionLabel(self, lat=0, lon=0):
         text_items = []
@@ -92,8 +104,16 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
 
     @QtCore.pyqtSignature('bool')
     def on_cellChangeValueButton_clicked(self):
-        new_depth_t = float(self.cellDepth_TEdit.text())
-        new_num_levels = int(self.cellNum_LevelsEdit.text())
+        try:
+            new_depth_t = float(self.cellDepth_TEdit.text())
+        except ValueError:
+            pass  # TODO: raise error
+
+        try:
+            new_num_levels = int(self.cellNum_LevelsEdit.text())
+        except ValueError:
+            pass  # TODO: raise error
+
         self._figure.change_value(new_depth_t, new_num_levels)
         self.updateCellValueEdits()
 

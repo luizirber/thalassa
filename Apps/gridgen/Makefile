@@ -15,6 +15,7 @@ check: pep8 pylint pyflakes clonedigger
 clean:
 	- rm gridgen/ui/qtmplui/qtui.py gridgen/ui/qtmplui/gridgen_rc.py
 	- rm -rf dist build MANIFEST
+	- find . -iname '*.pyc' -exec rm {} +
 
 build: clean
 	python setup.py build
