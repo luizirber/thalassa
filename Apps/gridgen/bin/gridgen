@@ -4,6 +4,11 @@ import sys
 import os
 from os.path import isdir, exists, join, walk, splitext, split, abspath
 
+try:
+    sys.exec_prefix = os.environ['PYTHONHOME']
+except KeyError:
+    pass 
+
 from PyQt4 import QtGui
 import matplotlib
 matplotlib.use('QT4Agg')

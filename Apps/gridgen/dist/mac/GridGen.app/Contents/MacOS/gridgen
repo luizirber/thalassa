@@ -11,35 +11,10 @@
 # K-3D Modifications: Timothy M. Shead <tshead@k-3d.com>
 
 #cd "${0%/*}"
-echo $0
 MACOS="`dirname $0`"
 CONTENTS="`dirname $MACOS`"
 RESOURCES="$CONTENTS/Resources"
 BIN="$CONTENTS/bin"
-
-CFG="$HOME/.gridgen/bundle"
-
-PYTHONPATH="$CONTENTS/lib/python2.6"
-PYTHONPATH="$PYTHONPATH:$PYTHONPATH/site-packages:/System/Library/Frameworks/Python.framework/Versions/2.6/Extras/lib/python/PyObjC"
-#GDK_PIXBUF_MODULE_FILE="$CFG/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
-#PANGO_RC_FILE="$CFG/etc/pango/pangorc"
-#GTK_IM_MODULE_FILE="$CFG/etc/gtk-2.0/gtk.immodules"
-
-export PYTHONPATH #GDK_PIXBUF_MODULE_FILE PANGO_RC_FILE GTK_IM_MODULE_FILE
-
-# Because the bundle could be located anywhere at runtime, we have to
-# create temporary copies of the GTK+/Gdk-Pixbuf/Pango configuration files
-# that reflect our current location
-#mkdir -p "$CFG/etc/gtk-2.0"
-#sed -e 's|/usr/local|'"$CONTENTS|g" "$RESOURCES/etc/gtk-2.0/gtk.immodules" > "$CFG/etc/gtk-2.0/gtk.immodules"
-#cp -f "$RESOURCES/etc/gtk-2.0/im-multipress.conf" "$CFG/etc/gtk-2.0/im-multipress.conf"
-
-#mkdir -p "$CFG/etc/pango"
-#sed -e 's|/usr/local|'"$CFG|g" "$RESOURCES/etc/pango/pangorc" > "$CFG/etc/pango/pangorc"
-#sed -e 's|/usr/local|\"'"$CONTENTS|g" -e "s/\.so/.so\"/g" "$RESOURCES/etc/pango/pango.modules" > "$CFG/etc/pango/pango.modules"
-#cp -f "$RESOURCES/etc/pango/pangox.aliases" "$CFG/etc/pango/pangox.aliases"
-
-#mkdir -p "$CFG/lib/gdk-pixbuf-2.0/2.10.0"
-#sed -e 's|/usr/local|'"$CONTENTS|g" "$RESOURCES/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache" > "$CFG/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
-echo $PYTHONPATH
-"$BIN/python" "$BIN/gridgen"
+export PYTHONHOME=$MACOS
+#export DYLD_PRINT_LIBRARIES=1
+"$MACOS/gridgen.bin"

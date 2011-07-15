@@ -4,7 +4,13 @@ GridGen.app/Contents/include/
 GridGen.app/Contents/lib/
 GridGen.app/Contents/etc/
 GridGen.app/Contents/share/
-GridGen.app/Contents/Resources/etc/gtk-2.0/
-GridGen.app/Contents/Resources/etc/pango/pango.modules
-GridGen.app/Contents/Resources/etc/pango/pangox.aliases
-GridGen.app/Contents/Resources/lib/
+GridGen.app/Contents/MacOS/*.so
+GridGen.app/Contents/MacOS/*.dylib
+GridGen.app/Contents/MacOS/PyQt4.uic.widget-plugins/
+GridGen.app/Contents/MacOS/Qt*
+GridGen.app/Contents/MacOS/mpl-data/
+GridGen.app/Contents/MacOS/gridgen.bin
+GridGen.app/Contents/MacOS/phonon
+GridGen.app/Contents/Resources/qt_menu.nib
+GridGen.app/Contents/MacOS/include
+GridGen.app/Contents/MacOS/lib

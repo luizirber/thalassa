@@ -186,7 +186,7 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
             'Open file',
             default_path)
         # TODO: open a dialog, showing the error if this doesn't work.
-        grid = MOM4Grid(filename)
+        grid = MOM4Grid(str(filename))
 
         self._figure = MplFigure(grid)
         self.mapwidget.set_canvas(self._figure)

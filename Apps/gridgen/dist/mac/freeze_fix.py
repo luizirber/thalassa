@@ -2,7 +2,7 @@ import os
 import subprocess
 
 #Change the absolute paths in all library files to relative paths
-distDir = 'dist/mac/GridGen.app/Contents/'
+distDir = 'dist/mac/GridGen.app/Contents/MacOS'
 shippedfiles=os.listdir(distDir)
 
 for file in shippedfiles:
