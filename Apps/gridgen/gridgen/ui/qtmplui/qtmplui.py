@@ -169,6 +169,10 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         self.close()
 
     @QtCore.pyqtSignature('bool')
+    def on_saveChangesButton_clicked(self, checked):
+        self.on_actionSaveGridChanges_triggered(checked)
+
+    @QtCore.pyqtSignature('bool')
     def on_actionSaveGridChanges_triggered(self, checked):
         # TODO: return error when location is invalid?
         default_path = 'examples/data/grids_tupa/'
@@ -177,6 +181,10 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
             'Save file',
             default_path)
         self._figure.save_diff(filename)
+
+    @QtCore.pyqtSignature('bool')
+    def on_openGridButton_clicked(self, checked):
+        self.on_actionOpenGrid_triggered(checked)
 
     @QtCore.pyqtSignature('bool')
     def on_actionOpenGrid_triggered(self, checked):
@@ -196,6 +204,10 @@ class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):
         self.updateZoomSlider()
         self._figure.set_changed_value_callback(self.updateCellValueEdits)
         self._figure.set_pointed_value_callback(self.updatePositionLabel)
+
+    @QtCore.pyqtSignature('bool')
+    def on_loadChangesButton_clicked(self, checked):
+        self.on_actionLoadGridChanges_triggered(checked)
 
     @QtCore.pyqtSignature('bool')
     def on_actionLoadGridChanges_triggered(self, checked):
