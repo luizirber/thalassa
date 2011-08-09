@@ -85,7 +85,10 @@ class MOM4Grid(Grid):
             self.change_value_for_pos(px, py, depth_t)
         elif self.num_levels[px[0], py[0]] != num_levels:
             self.num_levels[sx, sy] = num_levels
-            self.depth_t[sx, sy] = self.zb[int(num_levels) - 1]
+            if num_levels <= 0:
+                self.depth_t[sx, sy] = self.zb[0]
+            else:
+                self.depth_t[sx, sy] = self.zb[int(num_levels) - 1]
         else:
             self.change_value_for_pos(px, py, depth_t)
 
