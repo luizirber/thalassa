@@ -50,6 +50,13 @@ $INSTALLDIR/bin/easy_install PIL
 $INSTALLDIR/bin/easy_install matplotlib-1.0.1.tar.gz
 $INSTALLDIR/bin/easy_install basemap-1.0.1.tar.gz
 
+# Copy homebrew-made libraries missed in the fix step
+cp /usr/local/lib/libsz* $LIBDIR
+cp /usr/local/lib/libhdf5* $LIBDIR
+
+# Copy qt resources
+cp -R `find /usr/local -iname qt_menu.nib` $INSTALLDIR/Resources/
+
 # Resources, are processed on startup
 #for dir in etc/gtk-2.0 etc/pango lib/gdk-pixbuf-2.0/2.10.0; do
 #  mkdir -p $INSTALLDIR/Resources/$dir
@@ -82,7 +89,7 @@ function fix_paths() {
   done
 }
 
-binlibs=`find $INSTALLDIR -type f -name '*.so'`
+binlibs=`find $INSTALLDIR -type f \( -name '*.so' -or -name '*.dylib' \)`
 
 for lib in $binlibs; do
   log Resolving $lib

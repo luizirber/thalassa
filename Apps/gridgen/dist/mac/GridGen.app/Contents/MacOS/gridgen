@@ -15,6 +15,12 @@ MACOS="`dirname $0`"
 CONTENTS="`dirname $MACOS`"
 RESOURCES="$CONTENTS/Resources"
 BIN="$CONTENTS/bin"
-export PYTHONHOME=$MACOS
+
+PYTHONPATH="$CONTENTS/lib/python2.6:$CONTENTS/lib/python2.6/site-packages:$PYTHONPATH:/System/Library/Frameworks/Python.framework/Versions/2.6/Extras/lib/python/PyObjC"
+
+export PYTHONPATH
+
+#export PYTHONHOME=$MACOS
 #export DYLD_PRINT_LIBRARIES=1
-"$MACOS/gridgen.bin"
+
+"$BIN/python" "$BIN/gridgen"
