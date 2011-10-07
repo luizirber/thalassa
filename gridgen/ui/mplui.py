@@ -7,7 +7,7 @@ import numpy.ma as ma
 from numpy.lib.scimath import logn
 from mpl_toolkits import basemap
 
-from gridgen.ui import UI
+from thalassa.ui import UI
 
 
 class MplFigure(Figure):

@@ -1,13 +1,13 @@
 #!/bin/bash
 #
-# Package script for GridGen, based on Gaphor:
+# Package script for Thalassa, based on Gaphor:
 # https://github.com/amolenaar/gaphor-osx-bundle
 #
 # Thanks: http://stackoverflow.com/questions/1596945/building-osx-app-bundle
 
-# Also fix $INSTALLDIR/MacOS/gridgen in case this number changes
+# Also fix $INSTALLDIR/MacOS/thalassa in case this number changes
 PYVER=2.6
-APP=GridGen.app
+APP=Thalassa.app
 INSTALLDIR=$APP/Contents
 LIBDIR=$INSTALLDIR/lib
 
@@ -15,7 +15,7 @@ LOCALDIR=/usr/local
 
 virtualenv --python=python$PYVER --distribute $INSTALLDIR
 
-$INSTALLDIR/bin/easy_install gridgen-1.0.tar.gz
+$INSTALLDIR/bin/easy_install thalassa-1.0.tar.gz
 
 # Make hashbang for python scripts in bin/ relative (#!/usr/bin/env python2.6)
 #virtualenv -v --relocatable $INSTALLDIR
@@ -124,5 +124,5 @@ function fix_config() {
 # Package!
 
 #VERSION=`find . -name 'gaphor*egg' | sed -e 's|.*/gaphor-||' -e 's|-py.*egg$||'`
-zip -r GridGen-1.0-osx.zip $APP
-hdiutil create -srcfolder $APP GridGen-1.0.dmg
+zip -r Thalassa-1.0-osx.zip $APP
+hdiutil create -srcfolder $APP Thalassa-1.0.dmg

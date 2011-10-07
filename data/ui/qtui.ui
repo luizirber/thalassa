@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>GridGen</string>
+   <string>Thalassa</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">
@@ -76,7 +76,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="../gridgen.qrc">
+              <iconset resource="../thalassa.qrc">
                <normaloff>:/icons/zoom-out.png</normaloff>:/icons/zoom-out.png</iconset>
              </property>
              <property name="shortcut">
@@ -96,7 +96,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="../gridgen.qrc">
+              <iconset resource="../thalassa.qrc">
                <normaloff>:/icons/arrow-right.png</normaloff>:/icons/arrow-right.png</iconset>
              </property>
             </widget>
@@ -113,7 +113,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="../gridgen.qrc">
+              <iconset resource="../thalassa.qrc">
                <normaloff>:/icons/arrow-up.png</normaloff>:/icons/arrow-up.png</iconset>
              </property>
             </widget>
@@ -188,7 +188,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="../gridgen.qrc">
+              <iconset resource="../thalassa.qrc">
                <normaloff>:/icons/zoom-in.png</normaloff>:/icons/zoom-in.png</iconset>
              </property>
              <property name="shortcut">
@@ -208,7 +208,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="../gridgen.qrc">
+              <iconset resource="../thalassa.qrc">
                <normaloff>:/icons/arrow-down.png</normaloff>:/icons/arrow-down.png</iconset>
              </property>
             </widget>
@@ -225,7 +225,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="../gridgen.qrc">
+              <iconset resource="../thalassa.qrc">
                <normaloff>:/icons/arrow-left.png</normaloff>:/icons/arrow-left.png</iconset>
              </property>
             </widget>
@@ -653,12 +653,12 @@
   <customwidget>
    <class>QtMplWidget</class>
    <extends>QWidget</extends>
-   <header>gridgen.ui.qtmplui</header>
+   <header>thalassa.ui.qtmplui</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../gridgen.qrc"/>
+  <include location="../thalassa.qrc"/>
  </resources>
  <connections/>
 </ui>

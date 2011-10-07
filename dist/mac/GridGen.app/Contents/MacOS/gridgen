@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# GridGen startup script
+# Thalassa startup script
 # Author: Luiz Irber <luiz.irber@gmail.com>
 #
 # Based on Gaphor startup script by Arjan Molenaar <gaphor@gmail.com>
@@ -23,4 +23,4 @@ export PYTHONPATH
 #export PYTHONHOME=$MACOS
 #export DYLD_PRINT_LIBRARIES=1
 
-"$BIN/python" "$BIN/gridgen"
+"$BIN/python" "$BIN/thalassa"

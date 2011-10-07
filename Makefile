@@ -1,19 +1,19 @@
 pep8:
-	pep8 --exclude="gridgen_rc.py,qtui.py" gridgen
+	pep8 --exclude="thalassa_rc.py,qtui.py" thalassa
 
 pylint:
-	pylint -d c --ignore=gridgen_rc.py --ignore=qtui.py gridgen
+	pylint -d c --ignore=thalassa_rc.py --ignore=qtui.py thalassa
 
 pyflakes:
-	pyflakes gridgen
+	pyflakes thalassa
 
 clonedigger: clean
-	clonedigger -o tests/output.html gridgen
+	clonedigger -o tests/output.html thalassa
 
 check: pep8 pylint pyflakes clonedigger
 
 clean:
-	- rm gridgen/ui/qtmplui/qtui.py gridgen/ui/qtmplui/gridgen_rc.py
+	- rm thalassa/ui/qtmplui/qtui.py thalassa/ui/qtmplui/thalassa_rc.py
 	- rm -rf dist build MANIFEST
 	- find . -iname '*.pyc' -exec rm {} +
 

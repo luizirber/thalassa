@@ -2,9 +2,9 @@
 
 from PyQt4 import QtGui, QtCore
 
-from gridgen import MOM4Grid
-from gridgen.ui import UI, MplFigure
-from gridgen.ui.qtmplui import Ui_QtMplWindow
+from thalassa import MOM4Grid
+from thalassa.ui import UI, MplFigure
+from thalassa.ui.qtmplui import Ui_QtMplWindow
 
 
 class QtMplUI(QtGui.QMainWindow, Ui_QtMplWindow, UI):

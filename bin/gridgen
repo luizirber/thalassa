@@ -7,21 +7,21 @@ from os.path import isdir, exists, join, walk, splitext, split, abspath
 try:
     sys.exec_prefix = os.environ['PYTHONHOME']
 except KeyError:
-    pass 
+    pass
 
 from PyQt4 import QtGui
 import matplotlib
 matplotlib.use('QT4Agg')
 
 try:
-    from gridgen.ui import QtMplUI
+    from thalassa.ui import QtMplUI
 except ImportError:
-    sys.path.append(abspath(join('..', 'gridgen')))
+    sys.path.append(abspath(join('..', 'thalassa')))
     sys.path.append(abspath('..'))
     from setup_utils import build_qt_ui
     build_qt_ui()
 
-from gridgen.ui import QtMplUI
+from thalassa.ui import QtMplUI
 
 qApp = QtGui.QApplication(sys.argv)
 

@@ -36,17 +36,17 @@
 	</array>
   -->
 	<key>CFBundleExecutable</key>
-	<string>gridgen</string>
+	<string>thalassa</string>
 	<key>CFBundleGetInfoString</key>
 	<string>0.17.0.dev</string>
 	<key>CFBundleIconFile</key>
-	<string>gaphor.icns</string>
+	<string>thalassa.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>br.inpe.cptec.ocean.gridgen</string>
+	<string>br.inpe.cptec.ocean.thalassa</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>GridGen</string>
+	<string>Thalassa</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -57,9 +57,9 @@
 	<string>1.0</string>
 	<key>CFBundleDisplayName</key>
 	<!-- shown in menu bar during running -->
-	<string>GridGen</string>
+	<string>Thalassa</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright 2011 GridGen Developers, GNU General Public License.</string>
+	<string>Copyright 2011 Thalassa Developers, GNU General Public License.</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.6</string>
         <key>LSUIElement</key>

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# GridGen startup script
+# Thalassa startup script
 # Author: Luiz Irber <luiz.irber@gmail.com>
 #
 # Based on Gaphor startup script by Arjan Molenaar <gaphor@gmail.com>
@@ -17,7 +17,7 @@ CONTENTS="`dirname $MACOS`"
 RESOURCES="$CONTENTS/Resources"
 BIN="$CONTENTS/bin"
 
-CFG="$HOME/.gridgen/bundle"
+CFG="$HOME/.thalassa/bundle"
 
 PYTHONPATH="$CONTENTS/lib/python2.6"
 PYTHONPATH="$PYTHONPATH:$PYTHONPATH/site-packages:/System/Library/Frameworks/Python.framework/Versions/2.6/Extras/lib/python/PyObjC"
@@ -42,4 +42,4 @@ export PYTHONPATH #GDK_PIXBUF_MODULE_FILE PANGO_RC_FILE GTK_IM_MODULE_FILE
 #mkdir -p "$CFG/lib/gdk-pixbuf-2.0/2.10.0"
 #sed -e 's|/usr/local|'"$CONTENTS|g" "$RESOURCES/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache" > "$CFG/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
 echo $PYTHONPATH
-"$BIN/python" "$BIN/gridgen"
+"$BIN/python" "$BIN/thalassa"

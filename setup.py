@@ -41,7 +41,7 @@ if 'py2exe' in sys.argv:
     data_files = matplotlib.get_py2exe_datafiles()
     data_files.append((join('mpl_toolkits', 'basemap', 'data'),
                        findall(join(dirname(basemap.__file__), 'data')) ))
-    kwargs['windows'] = [{'script': "bin/gridgen",
+    kwargs['windows'] = [{'script': "bin/thalassa",
                           'data_files': data_files}],
     kwargs['options'] = {"py2exe": {"skip_archive":True,
                                     "includes": ["sip", "netCDF4_utils",
@@ -62,20 +62,19 @@ Topic :: Education
 Topic :: Software Development :: Libraries :: Python Modules
 """
 
-setup(name             = 'gridgen',
+setup(name             = 'Thalassa',
       version          = '1.0',
       author           = 'Luiz Irber',
       author_email     = 'luiz.irber@cptec.inpe.br',
       maintainer       = 'Luiz Irber',
       maintainer_email = 'luiz.irber@gmail.com',
-      url              = 'http://projetos.cptec.inpe.br/projects/gridgen',
+      url              = 'https://bitbucket.org/luizirber/thalassa',
       description      = 'Grid editor for ocean models',
       long_description = """\
 Grid editor for ocean models
 """,
-      download_url     = 'http://pypi.python.org/packages/source/g/gridgen/',
-      packages         = ['gridgen', 'gridgen.ui', 'gridgen.ui.qtmplui', 'gridgen.grid'],
-      scripts          = ["bin/gridgen"],
+      packages         = ['thalassa', 'thalassa.ui', 'thalassa.ui.qtmplui', 'thalassa.grid'],
+      scripts          = ["bin/thalassa"],
       cmdclass         = cmdclass,
       classifiers      = filter(None, classifiers.split("\n")),
       platforms        = 'any',

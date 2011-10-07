@@ -1,5 +1,5 @@
 include setup.py
 include setup_utils.py
-recursive-include bin gridgen
-recursive-include gridgen *.py
+recursive-include bin thalassa
+recursive-include thalassa *.py
 recursive-include data *.qrc *.ui *.png

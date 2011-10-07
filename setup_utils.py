@@ -33,7 +33,7 @@ def build_qt_ui(src='data', dest=''):
         for filename in filenames:
             if filename.endswith('.ui'):
                 compile_ui(join(dirpath, filename),
-                    os.path.join(dest, 'gridgen', 'ui', 'qtmplui'))
+                    os.path.join(dest, 'thalassa', 'ui', 'qtmplui'))
             elif filename.endswith('.qrc'):
                 compile_rc(join(dirpath, filename),
-                    os.path.join(dest, 'gridgen', 'ui', 'qtmplui'))
+                    os.path.join(dest, 'thalassa', 'ui', 'qtmplui'))
