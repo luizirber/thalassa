@@ -14,7 +14,7 @@ check: pep8 pylint pyflakes clonedigger
 
 clean:
 	- rm thalassa/ui/qtmplui/qtui.py thalassa/ui/qtmplui/thalassa_rc.py
-	- rm -rf dist build MANIFEST
+	- rm -rf build MANIFEST
 	- find . -iname '*.pyc' -exec rm {} +
 
 build: clean
