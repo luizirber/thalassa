@@ -1,7 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from distutils.core import setup, Command
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    import distribute_setup
+    distribute_setup.use_setuptools()
+    from setuptools import setup, find_packages
+
+from distutils.core import Command
 from distutils.command.build import build as _build_orig
 from distutils.filelist import findall
 from os.path import join, dirname
@@ -62,20 +69,27 @@ Topic :: Education
 Topic :: Software Development :: Libraries :: Python Modules
 """
 
+
+long_description = """\
+Grid editor for ocean models. Supports MOM4p1 grids (tested with tripolar grids)
+and outputs a file ready to be used as input for edit_grid.
+"""
+
+requires = ['matplotlib', 'basemap', 'PyQT', 'numpy', 'netCDF4']
+
 setup(name             = 'Thalassa',
-      version          = '1.0',
+      version          = '1.1',
       author           = 'Luiz Irber',
       author_email     = 'luiz.irber@cptec.inpe.br',
       maintainer       = 'Luiz Irber',
       maintainer_email = 'luiz.irber@gmail.com',
       url              = 'https://bitbucket.org/luizirber/thalassa',
       description      = 'Grid editor for ocean models',
-      long_description = """\
-Grid editor for ocean models
-""",
+      long_description = long_description,
       packages         = ['thalassa', 'thalassa.ui', 'thalassa.ui.qtmplui', 'thalassa.grid'],
       scripts          = ["bin/thalassa"],
       cmdclass         = cmdclass,
+      install_requires = requires,
       classifiers      = filter(None, classifiers.split("\n")),
       platforms        = 'any',
       license          = 'GPL',
