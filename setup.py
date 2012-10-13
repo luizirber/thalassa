@@ -75,7 +75,7 @@ Grid editor for ocean models. Supports MOM4p1 grids (tested with tripolar grids)
 and outputs a file ready to be used as input for edit_grid.
 """
 
-requires = ['matplotlib', 'basemap', 'PyQT', 'numpy', 'netCDF4']
+requires = ['matplotlib', 'basemap', 'numpy', 'netCDF4', 'PIL']
 
 setup(name             = 'Thalassa',
       version          = '1.1',

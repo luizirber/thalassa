@@ -5,7 +5,7 @@
 #
 # Thanks: http://stackoverflow.com/questions/1596945/building-osx-app-bundle
 
-# Also fix $INSTALLDIR/MacOS/thalassa in case this number changes
+# Also fix $INSTALLDIR/MacOS/thalassa in ca this number changes
 PYVER=2.6
 APP=Thalassa.app
 INSTALLDIR=$APP/Contents
@@ -13,9 +13,10 @@ LIBDIR=$INSTALLDIR/lib
 
 LOCALDIR=/usr/local
 
-virtualenv --python=python$PYVER --distribute $INSTALLDIR
+export PYTHONPATH=/usr/local/lib/python:$PYTHONPATH
 
-$INSTALLDIR/bin/easy_install thalassa-1.0.tar.gz
+virtualenv --no-site-packages --python=python$PYVER --distribute $INSTALLDIR
+
 
 # Make hashbang for python scripts in bin/ relative (#!/usr/bin/env python2.6)
 #virtualenv -v --relocatable $INSTALLDIR
@@ -27,7 +28,7 @@ mkdir -p $SITEPACKAGES
 
 # This locates pyqt4.pyc. We want the source file
 pyqt4=`python -c "import PyQt4; print PyQt4.__file__[:-1]"`
-sip=`python -c "import sip; print sip.__file__[:-1]"`
+sip=`python -c "import sip; print sip.__file__"`
 oldsite=`dirname $pyqt4`
 sipsite=`dirname $sip`
 
@@ -45,10 +46,9 @@ for dir in share/sip; do
 done
 
 $INSTALLDIR/bin/easy_install numpy
-$INSTALLDIR/bin/easy_install netCDF4
-$INSTALLDIR/bin/easy_install PIL
-$INSTALLDIR/bin/easy_install matplotlib-1.0.1.tar.gz
+$INSTALLDIR/bin/easy_install matplotlib-1.1.0.tar.gz
 $INSTALLDIR/bin/easy_install basemap-1.0.1.tar.gz
+$INSTALLDIR/bin/easy_install Thalassa-1.1.tar.gz
 
 # Copy homebrew-made libraries missed in the fix step
 cp /usr/local/lib/libsz* $LIBDIR
@@ -124,5 +124,5 @@ function fix_config() {
 # Package!
 
 #VERSION=`find . -name 'gaphor*egg' | sed -e 's|.*/gaphor-||' -e 's|-py.*egg$||'`
-zip -r Thalassa-1.0-osx.zip $APP
-hdiutil create -srcfolder $APP Thalassa-1.0.dmg
+zip -r Thalassa-1.1-osx.zip $APP
+hdiutil create -srcfolder $APP Thalassa-1.1.dmg
