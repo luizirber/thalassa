@@ -113,7 +113,7 @@ and outputs a file ready to be used as input for edit_grid.
 requires = ['matplotlib', 'basemap', 'numpy', 'netCDF4', 'PIL']
 
 setup(name             = 'Thalassa',
-      version          = '1.1',
+      version          = '1.2',
       author           = 'Luiz Irber',
       author_email     = 'luiz.irber@cptec.inpe.br',
       maintainer       = 'Luiz Irber',
